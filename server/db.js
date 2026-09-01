@@ -9,6 +9,8 @@ const dbConfig = {
   connectString: process.env.ORACLE_CONNECT_STRING || '127.0.0.1:1521/XEPDB1'
 }
 
+const TABLE_NAME = process.env.ORACLE_TABLE_NAME || 'EVENTOS_DOWNTIME'
+
 let isPoolInitialized = false
 
 /**
@@ -74,7 +76,7 @@ export async function getEventPeriodStatus(year, month) {
     connection = await oracledb.getConnection(dbConfig)
     const result = await connection.execute(
       `SELECT COUNT(*) AS TOTAL
-         FROM EVENTOS_DOWNTIME
+         FROM ${TABLE_NAME}
         WHERE FINI_CAIDA >= :periodStart
           AND FINI_CAIDA < :periodEnd`,
       {
@@ -105,7 +107,7 @@ export async function getEventsByPeriod(year, month) {
               INDICADOR,
               MOTIVO,
               ROUND((CAST(FFIN_CAIDA AS DATE) - CAST(FINI_CAIDA AS DATE)) * 24 * 60, 2) AS DURACION_MINUTOS
-         FROM EVENTOS_DOWNTIME
+         FROM ${TABLE_NAME}
         WHERE FINI_CAIDA >= :periodStart
           AND FINI_CAIDA < :periodEnd
         ORDER BY FINI_CAIDA, SISTEMA`,
@@ -201,7 +203,7 @@ export async function insertEventsToOracle(events) {
     connection = await oracledb.getConnection(dbConfig)
 
     const sql = `
-      INSERT INTO EVENTOS_DOWNTIME (
+      INSERT INTO ${TABLE_NAME} (
         SISTEMA,
         FINI_CAIDA,
         FFIN_CAIDA,
