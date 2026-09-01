@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import type { RawEventRecord } from '../types/uptime'
 import {
   parseDurationToSeconds,
@@ -74,60 +74,85 @@ function extractMonthAndYearFromDate(rawVal: any): { month?: number; year?: numb
 /**
  * Normalizes header string to find matching column.
  */
-function findColumnKey(headers: string[], candidates: string[]): string | undefined {
-  return headers.find(h => {
+function findColumnIndex(headers: string[], candidates: string[]): number {
+  return headers.findIndex(h => {
     const clean = h.toLowerCase().replace(/[^a-z0-9]/g, '')
     return candidates.some(c => clean.includes(c.replace(/[^a-z0-9]/g, '')))
   })
 }
 
+function getCellFormattedValue(cell: ExcelJS.Cell | undefined): string {
+  if (!cell || cell.value === null || cell.value === undefined) return ''
+  if (cell.value instanceof Date) {
+    const d = cell.value
+    const day = d.getDate().toString().padStart(2, '0')
+    const month = (d.getMonth() + 1).toString().padStart(2, '0')
+    const year = d.getFullYear()
+    return `${day}/${month}/${year}`
+  }
+  if (typeof cell.value === 'object') {
+    if ('text' in cell.value && typeof (cell.value as any).text === 'string') {
+      return (cell.value as any).text
+    }
+    if ('result' in cell.value && (cell.value as any).result !== undefined) {
+      return String((cell.value as any).result ?? '')
+    }
+    if ('richText' in cell.value && Array.isArray((cell.value as any).richText)) {
+      return (cell.value as any).richText.map((t: any) => t.text || '').join('')
+    }
+    if ('hyperlink' in cell.value && (cell.value as any).text) {
+      return String((cell.value as any).text)
+    }
+  }
+  return String(cell.value).trim()
+}
+
 /**
- * Parses an Excel or CSV file buffer and returns standardized incident event records.
+ * Parses an Excel file buffer and returns standardized incident event records.
  */
 export async function parseExcelBuffer(buffer: ArrayBuffer | Uint8Array): Promise<ParsedExcelResult> {
-  const workbook = XLSX.read(buffer, {
-    type: 'array',
-    cellDates: true,
-    cellText: true
-  })
+  const workbook = new ExcelJS.Workbook()
+  await workbook.xlsx.load(buffer as any)
 
-  const sheetNames = workbook.SheetNames
-  if (sheetNames.length === 0) {
+  if (workbook.worksheets.length === 0) {
     throw new Error('El archivo Excel no contiene hojas de datos.')
   }
 
   // Use the first sheet as requested
-  const firstSheetName = sheetNames[0]
-  const worksheet = workbook.Sheets[firstSheetName]
+  const worksheet = workbook.worksheets[0]
+  const sheetName = worksheet.name || 'Hoja1'
 
-  // Convert to array of objects with raw strings/values
-  const rawRows: any[] = XLSX.utils.sheet_to_json(worksheet, {
-    defval: '',
-    raw: false,
-    dateNF: 'yyyy-mm-dd'
+  const rows: ExcelJS.Row[] = []
+  worksheet.eachRow((row) => {
+    rows.push(row)
   })
 
-  if (rawRows.length === 0) {
+  if (rows.length === 0) {
     return {
       events: [],
       detectedPeriods: [],
-      sheetName: firstSheetName,
+      sheetName,
       rowCount: 0,
       warnings: ['La hoja de cálculo está vacía.']
     }
   }
 
-  // Get keys from first object
-  const headerKeys = Object.keys(rawRows[0])
+  // Header row
+  const headerRow = rows[0]
+  const headers: string[] = []
+  const maxCol = Math.max(headerRow.cellCount, headerRow.actualCellCount, 20)
+  for (let col = 1; col <= maxCol; col++) {
+    headers.push(getCellFormattedValue(headerRow.getCell(col)))
+  }
 
   // Column matching with synonyms
-  const colSistema = findColumnKey(headerKeys, ['sistema', 'system', 'servicio', 'aplicacion', 'core']) || 'SISTEMA'
-  const colFecha = findColumnKey(headerKeys, ['fecha', 'date', 'dia']) || 'FECHA'
-  const colInicio = findColumnKey(headerKeys, ['horadeiniciocaida', 'iniciocaida', 'horainicio', 'inicio', 'starttime']) || 'HORA DE INICIO CAIDA'
-  const colFin = findColumnKey(headerKeys, ['horadefincaida', 'fincaida', 'horafin', 'fin', 'endtime']) || 'HORA DE FIN CAIDA'
-  const colTiempo = findColumnKey(headerKeys, ['tiemposervicioabajo', 'tiempocaida', 'duracion', 'tiempoabajo', 'downtime']) || 'TIEMPO SERVICIO ABAJO'
-  const colIndicador = findColumnKey(headerKeys, ['indicador', 'indicator', 'tipo', 'tipodefalla', 'categoria']) || 'INDICADOR'
-  const colMotivo = findColumnKey(headerKeys, ['motivo', 'descripcion', 'causa', 'observacion', 'detalle', 'reason']) || 'MOTIVO'
+  const idxSistema = findColumnIndex(headers, ['sistema', 'system', 'servicio', 'aplicacion', 'core'])
+  const idxFecha = findColumnIndex(headers, ['fecha', 'date', 'dia'])
+  const idxInicio = findColumnIndex(headers, ['horadeiniciocaida', 'iniciocaida', 'horainicio', 'inicio', 'starttime'])
+  const idxFin = findColumnIndex(headers, ['horadefincaida', 'fincaida', 'horafin', 'fin', 'endtime'])
+  const idxTiempo = findColumnIndex(headers, ['tiemposervicioabajo', 'tiempocaida', 'duracion', 'tiempoabajo', 'downtime'])
+  const idxIndicador = findColumnIndex(headers, ['indicador', 'indicator', 'tipo', 'tipodefalla', 'categoria'])
+  const idxMotivo = findColumnIndex(headers, ['motivo', 'descripcion', 'causa', 'observacion', 'detalle', 'reason'])
 
   const events: RawEventRecord[] = []
   const monthCounts: Record<number, number> = {}
@@ -135,16 +160,22 @@ export async function parseExcelBuffer(buffer: ArrayBuffer | Uint8Array): Promis
   const periodCounts: Record<string, { month: number; year?: number; count: number }> = {}
   const warnings: string[] = []
 
-  let rowIdx = 0
-  for (const row of rawRows) {
-    rowIdx++
-    const sistemaVal = String(row[colSistema] || '').trim()
-    const fechaVal = String(row[colFecha] || '').trim()
-    const inicioVal = String(row[colInicio] || '').trim()
-    const finVal = String(row[colFin] || '').trim()
-    const tiempoVal = String(row[colTiempo] || '').trim()
-    const indicadorVal = String(row[colIndicador] || '').trim()
-    const motivoVal = String(row[colMotivo] || '').trim()
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r]
+    const rowIdx = r + 1
+
+    const getVal = (idx: number) => {
+      if (idx < 0) return ''
+      return getCellFormattedValue(row.getCell(idx + 1))
+    }
+
+    const sistemaVal = getVal(idxSistema)
+    const fechaVal = getVal(idxFecha)
+    const inicioVal = getVal(idxInicio)
+    const finVal = getVal(idxFin)
+    const tiempoVal = getVal(idxTiempo)
+    const indicadorVal = getVal(idxIndicador)
+    const motivoVal = getVal(idxMotivo)
 
     // Skip totally empty rows
     if (!sistemaVal && !fechaVal && !tiempoVal && !motivoVal) {
@@ -215,7 +246,7 @@ export async function parseExcelBuffer(buffer: ArrayBuffer | Uint8Array): Promis
     detectedMonth,
     detectedYear,
     detectedPeriods: Object.values(periodCounts).sort((a, b) => b.count - a.count),
-    sheetName: firstSheetName,
+    sheetName,
     rowCount: events.length,
     warnings
   }

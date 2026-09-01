@@ -1,20 +1,16 @@
 import { describe, it, expect } from 'vitest'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import { parseExcelBuffer } from '../../src/utils/excelParser'
 
 describe('Excel Parser Unit Tests', () => {
   it('parses an in-memory workbook with custom headers and extracts events and dates', async () => {
-    const wsData = [
-      ['SISTEMA', 'FECHA', 'HORA DE INICIO CAIDA', 'HORA DE FIN CAIDA', 'TIEMPO SERVICIO ABAJO', 'INDICADOR', 'MOTIVO'],
-      ['CORE T24', 'jueves, 18 de junio de 2026', '10:25:00 a. m.', '11:06:00 a. m.', '00:41:00', 'II-FALLAS', 'Problemas en inicios de sesión'],
-      ['ACH', '18/06/2026', '01:00:00', '01:58:00', '00:58:00', 'II-PROGRAMADA', 'Mantenimiento'],
-    ]
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet('Eventos')
+    worksheet.addRow(['SISTEMA', 'FECHA', 'HORA DE INICIO CAIDA', 'HORA DE FIN CAIDA', 'TIEMPO SERVICIO ABAJO', 'INDICADOR', 'MOTIVO'])
+    worksheet.addRow(['CORE T24', 'jueves, 18 de junio de 2026', '10:25:00 a. m.', '11:06:00 a. m.', '00:41:00', 'II-FALLAS', 'Problemas en inicios de sesión'])
+    worksheet.addRow(['ACH', '18/06/2026', '01:00:00', '01:58:00', '00:58:00', 'II-PROGRAMADA', 'Mantenimiento'])
 
-    const wb = XLSX.utils.book_new()
-    const ws = XLSX.utils.aoa_to_sheet(wsData)
-    XLSX.utils.book_append_sheet(wb, ws, 'Eventos')
-
-    const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' })
+    const buf = await workbook.xlsx.writeBuffer()
     const res = await parseExcelBuffer(buf)
 
     expect(res.events.length).toBe(2)
@@ -30,15 +26,14 @@ describe('Excel Parser Unit Tests', () => {
   })
 
   it('reports every detected period when the file mixes months', async () => {
-    const ws = XLSX.utils.aoa_to_sheet([
-      ['SISTEMA', 'FECHA', 'TIEMPO SERVICIO ABAJO', 'INDICADOR'],
-      ['CORE T24', '18/06/2026', '00:10:00', 'II-FALLAS'],
-      ['ACH', '02/07/2026', '00:05:00', 'II-FALLAS'],
-    ])
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Eventos')
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet('Eventos')
+    worksheet.addRow(['SISTEMA', 'FECHA', 'TIEMPO SERVICIO ABAJO', 'INDICADOR'])
+    worksheet.addRow(['CORE T24', '18/06/2026', '00:10:00', 'II-FALLAS'])
+    worksheet.addRow(['ACH', '02/07/2026', '00:05:00', 'II-FALLAS'])
 
-    const res = await parseExcelBuffer(XLSX.write(wb, { type: 'array', bookType: 'xlsx' }))
+    const buf = await workbook.xlsx.writeBuffer()
+    const res = await parseExcelBuffer(buf)
 
     expect(res.detectedPeriods).toHaveLength(2)
     expect(res.detectedPeriods).toEqual(expect.arrayContaining([

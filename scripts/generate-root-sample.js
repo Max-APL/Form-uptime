@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 
 const data = [
   {
@@ -57,8 +57,21 @@ const data = [
   }
 ]
 
-const ws = XLSX.utils.json_to_sheet(data)
-const wb = XLSX.utils.book_new()
-XLSX.utils.book_append_sheet(wb, ws, "Eventos")
-XLSX.writeFile(wb, "ejemplo_incidentes_junio_2026.xlsx")
-console.log("Archivo ejemplo_incidentes_junio_2026.xlsx generado exitosamente en la raíz.")
+async function generateSample() {
+  const wb = new ExcelJS.Workbook()
+  const ws = wb.addWorksheet("Eventos")
+  ws.columns = [
+    { header: 'SISTEMA', key: 'SISTEMA' },
+    { header: 'FECHA', key: 'FECHA' },
+    { header: 'HORA DE INICIO CAIDA', key: 'HORA DE INICIO CAIDA' },
+    { header: 'HORA DE FIN CAIDA', key: 'HORA DE FIN CAIDA' },
+    { header: 'TIEMPO SERVICIO ABAJO', key: 'TIEMPO SERVICIO ABAJO' },
+    { header: 'INDICADOR', key: 'INDICADOR' },
+    { header: 'MOTIVO', key: 'MOTIVO' }
+  ]
+  data.forEach(row => ws.addRow(row))
+  await wb.xlsx.writeFile("ejemplo_incidentes_junio_2026.xlsx")
+  console.log("Archivo ejemplo_incidentes_junio_2026.xlsx generado exitosamente en la raíz.")
+}
+
+generateSample()

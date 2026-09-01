@@ -1,6 +1,9 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import fs from 'fs'
 import {
   initOraclePool,
   testOracleConnection,
@@ -10,6 +13,10 @@ import {
 } from './db.js'
 
 dotenv.config()
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const distPath = path.resolve(__dirname, '../dist')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -94,6 +101,15 @@ app.post('/api/events', async (req, res) => {
     })
   }
 })
+
+// Serve static frontend in production if dist/ folder exists
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath))
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next()
+    res.sendFile(path.join(distPath, 'index.html'))
+  })
+}
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor API Oracle escuchando en http://localhost:${PORT}`)
