@@ -50,5 +50,6 @@ describe('Excel Generator Tests', () => {
     expect(ws.getCell('E1').value).toBe('TIEMPO SERVICIO ABAJO')
     expect(ws.getCell('F1').value).toBe('INDICADOR')
     expect(ws.getCell('G1').value).toBe('MOTIVO')
+    expect(ws.actualRowCount).toBe(1)
   })
 })

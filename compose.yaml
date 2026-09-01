@@ -1,0 +1,20 @@
+name: form-events
+services:
+  oracle:
+    image: gvenzl/oracle-free:23.26.2-slim
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1521:1521"
+    environment:
+      ORACLE_PASSWORD: ${ORACLE_PASSWORD:?Configura ORACLE_PASSWORD en .env}
+      ORACLE_DATABASE: XEPDB1
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      start_period: 180s
+      retries: 30
+volumes:
+  oracle-data:

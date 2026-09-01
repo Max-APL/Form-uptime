@@ -6,7 +6,7 @@ dotenv.config()
 const dbConfig = {
   user: process.env.ORACLE_USER || 'SYSTEM',
   password: process.env.ORACLE_PASSWORD || 'oracle',
-  connectString: process.env.ORACLE_CONNECT_STRING || 'localhost:1521/XEPDB1'
+  connectString: process.env.ORACLE_CONNECT_STRING || '127.0.0.1:1521/XEPDB1'
 }
 
 let isPoolInitialized = false
@@ -62,6 +62,71 @@ export async function testOracleConnection() {
         console.error('Error cerrando conexión de prueba:', closeErr)
       }
     }
+  }
+}
+
+/**
+ * Returns how many events have already been stored for a calendar period.
+ */
+export async function getEventPeriodStatus(year, month) {
+  let connection
+  try {
+    connection = await oracledb.getConnection(dbConfig)
+    const result = await connection.execute(
+      `SELECT COUNT(*) AS TOTAL
+         FROM EVENTOS_DOWNTIME
+        WHERE FINI_CAIDA >= :periodStart
+          AND FINI_CAIDA < :periodEnd`,
+      {
+        periodStart: new Date(year, month - 1, 1),
+        periodEnd: new Date(year, month, 1)
+      },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    )
+
+    const total = Number(result.rows?.[0]?.TOTAL || 0)
+    return { loaded: total > 0, total }
+  } finally {
+    if (connection) await connection.close()
+  }
+}
+
+/**
+ * Returns the events stored for a calendar period, ordered chronologically.
+ */
+export async function getEventsByPeriod(year, month) {
+  let connection
+  try {
+    connection = await oracledb.getConnection(dbConfig)
+    const result = await connection.execute(
+      `SELECT SISTEMA,
+              FINI_CAIDA,
+              FFIN_CAIDA,
+              INDICADOR,
+              MOTIVO,
+              ROUND((CAST(FFIN_CAIDA AS DATE) - CAST(FINI_CAIDA AS DATE)) * 24 * 60, 2) AS DURACION_MINUTOS
+         FROM EVENTOS_DOWNTIME
+        WHERE FINI_CAIDA >= :periodStart
+          AND FINI_CAIDA < :periodEnd
+        ORDER BY FINI_CAIDA, SISTEMA`,
+      {
+        periodStart: new Date(year, month - 1, 1),
+        periodEnd: new Date(year, month, 1)
+      },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    )
+
+    return (result.rows || []).map((row, index) => ({
+      id: `${year}-${month}-${index}`,
+      sistema: row.SISTEMA,
+      inicio: row.FINI_CAIDA,
+      fin: row.FFIN_CAIDA,
+      indicador: row.INDICADOR,
+      motivo: row.MOTIVO,
+      duracionMinutos: Number(row.DURACION_MINUTOS || 0)
+    }))
+  } finally {
+    if (connection) await connection.close()
   }
 }
 

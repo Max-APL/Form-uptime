@@ -6,10 +6,14 @@
   "scripts": {
     "dev": "vite",
     "server": "node server/index.js",
+    "db:init": "node scripts/init-oracle-table.js",
+    "db:query": "node scripts/query-oracle.js",
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:start": "docker compose up -d --wait oracle",
+    "db:stop": "docker compose stop oracle"
   },
   "dependencies": {
     "chart.js": "^4.4.7",

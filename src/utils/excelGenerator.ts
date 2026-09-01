@@ -546,27 +546,6 @@ export async function generateEmptyTemplateWorkbook(): Promise<Blob> {
     })
   })
 
-  // Sample placeholder row
-  const sampleRow = ws.getRow(2)
-  sampleRow.height = 20
-  const sampleValues = [
-    'CORE T24',
-    'jueves, 18 de junio de 2026',
-    '10:25:00 a. m.',
-    '11:06:00 a. m.',
-    '00:41:00',
-    'II-FALLAS',
-    'Problemas en inicios de sesión de usuarios, por bloqueo en tabla de registro de sesiones.'
-  ]
-  sampleValues.forEach((val, idx) => {
-    const cell = sampleRow.getCell(idx + 1)
-    cell.value = val
-    styleCell(cell, {
-      font: { name: 'Arial', size: 10 },
-      alignment: { horizontal: idx === 0 || idx === 1 || idx === 6 ? 'left' : 'center', vertical: 'middle' }
-    })
-  })
-
   const buffer = await workbook.xlsx.writeBuffer()
   return new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'

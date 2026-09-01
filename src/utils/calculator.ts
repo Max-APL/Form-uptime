@@ -175,7 +175,7 @@ export function calculateUptimeMetrics(
   const monthName = getMonthNameSpanish(month)
 
   // Build the list of active systems: custom catalog + any systems in events not in catalog
-  const catalog = customCatalog && customCatalog.length > 0 ? [...customCatalog] : [...DEFAULT_SYSTEMS]
+  const catalog = customCatalog !== undefined ? [...customCatalog] : [...DEFAULT_SYSTEMS]
   const systemsOrder: string[] = [...catalog]
 
   for (const ev of events) {

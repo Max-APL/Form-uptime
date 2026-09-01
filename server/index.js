@@ -4,6 +4,8 @@ import dotenv from 'dotenv'
 import {
   initOraclePool,
   testOracleConnection,
+  getEventPeriodStatus,
+  getEventsByPeriod,
   insertEventsToOracle
 } from './db.js'
 
@@ -31,6 +33,39 @@ app.get('/api/health', (req, res) => {
 app.get('/api/db-status', async (req, res) => {
   const result = await testOracleConnection()
   res.json(result)
+})
+
+app.get('/api/events/status', async (req, res) => {
+  const year = Number(req.query.year)
+  const month = Number(req.query.month)
+
+  if (!Number.isInteger(year) || year < 2000 || year > 2100 || !Number.isInteger(month) || month < 1 || month > 12) {
+    return res.status(400).json({ message: 'El mes o año no es válido.' })
+  }
+
+  try {
+    res.json(await getEventPeriodStatus(year, month))
+  } catch (err) {
+    console.error('Error consultando el período en Oracle:', err)
+    res.status(503).json({ message: 'No se pudo consultar Oracle.' })
+  }
+})
+
+app.get('/api/events', async (req, res) => {
+  const year = Number(req.query.year)
+  const month = Number(req.query.month)
+
+  if (!Number.isInteger(year) || year < 2000 || year > 2100 || !Number.isInteger(month) || month < 1 || month > 12) {
+    return res.status(400).json({ message: 'El mes o año no es válido.' })
+  }
+
+  try {
+    const events = await getEventsByPeriod(year, month)
+    res.json({ events, total: events.length })
+  } catch (err) {
+    console.error('Error consultando eventos en Oracle:', err)
+    res.status(503).json({ message: 'No se pudieron consultar los registros de Oracle.' })
+  }
 })
 
 // Insert / Sync Events to Oracle Database (EVENTOS_DOWNTIME)

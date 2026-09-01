@@ -7,10 +7,10 @@
         </div>
         <div>
           <h1 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
-            Generador de Reportes de Uptime y Eventos
+            Reporte mensual de disponibilidad
             <span class="text-xs font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">BMSC</span>
           </h1>
-          <p class="text-xs text-slate-500">Cálculo mensual de disponibilidad y generación de Excel multi-hoja</p>
+          <p class="text-xs text-slate-500">Carga de eventos y previsualización del cálculo</p>
         </div>
       </div>
 
@@ -35,6 +35,6 @@ const props = defineProps<{
 }>()
 
 const periodText = computed(() => {
-  return `${getMonthNameSpanish(props.month)} ${props.year} • ${props.totalHours} hrs totales`
+  return `${getMonthNameSpanish(props.month)} ${props.year} • ${(props.totalHours * 60).toLocaleString('es-BO')} min`
 })
 </script>

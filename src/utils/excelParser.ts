@@ -10,6 +10,7 @@ export interface ParsedExcelResult {
   events: RawEventRecord[]
   detectedMonth?: number
   detectedYear?: number
+  detectedPeriods: Array<{ month: number; year?: number; count: number }>
   sheetName: string
   rowCount: number
   warnings: string[]
@@ -109,6 +110,7 @@ export async function parseExcelBuffer(buffer: ArrayBuffer | Uint8Array): Promis
   if (rawRows.length === 0) {
     return {
       events: [],
+      detectedPeriods: [],
       sheetName: firstSheetName,
       rowCount: 0,
       warnings: ['La hoja de cálculo está vacía.']
@@ -130,6 +132,7 @@ export async function parseExcelBuffer(buffer: ArrayBuffer | Uint8Array): Promis
   const events: RawEventRecord[] = []
   const monthCounts: Record<number, number> = {}
   const yearCounts: Record<number, number> = {}
+  const periodCounts: Record<string, { month: number; year?: number; count: number }> = {}
   const warnings: string[] = []
 
   let rowIdx = 0
@@ -160,6 +163,12 @@ export async function parseExcelBuffer(buffer: ArrayBuffer | Uint8Array): Promis
     }
     if (year) {
       yearCounts[year] = (yearCounts[year] || 0) + 1
+    }
+    if (month) {
+      const periodKey = `${year || 'sin-anio'}-${month}`
+      const period = periodCounts[periodKey] || { month, year, count: 0 }
+      period.count++
+      periodCounts[periodKey] = period
     }
 
     // Calculate duration in seconds
@@ -205,6 +214,7 @@ export async function parseExcelBuffer(buffer: ArrayBuffer | Uint8Array): Promis
     events,
     detectedMonth,
     detectedYear,
+    detectedPeriods: Object.values(periodCounts).sort((a, b) => b.count - a.count),
     sheetName: firstSheetName,
     rowCount: events.length,
     warnings
