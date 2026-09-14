@@ -17,18 +17,18 @@ export interface ParsedExcelResult {
 }
 
 const MONTH_NAMES_MAP: Record<string, number> = {
-  enero: 1, jan: 1, january: 1,
-  febrero: 2, feb: 2, february: 2,
-  marzo: 3, mar: 3, march: 3,
-  abril: 4, apr: 4, april: 4,
+  enero: 1, january: 1,
+  febrero: 2, february: 2,
+  marzo: 3, march: 3,
+  abril: 4, april: 4,
   mayo: 5, may: 5,
-  junio: 6, jun: 6, june: 6,
-  julio: 7, jul: 7, july: 7,
-  agosto: 8, aug: 8, august: 8,
-  septiembre: 9, setiembre: 9, sep: 9, september: 9,
-  octubre: 10, oct: 10, october: 10,
-  noviembre: 11, nov: 11, november: 11,
-  diciembre: 12, dic: 12, dec: 12, december: 12
+  junio: 6, june: 6,
+  julio: 7, july: 7,
+  agosto: 8, august: 8,
+  septiembre: 9, setiembre: 9, september: 9,
+  octubre: 10, october: 10,
+  noviembre: 11, november: 11,
+  diciembre: 12, december: 12
 }
 
 /**

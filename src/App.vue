@@ -177,7 +177,7 @@ const periodValidationMessage = computed(() => {
   if (periodStatus.value === 'loaded') return `Período validado. Ya existen ${existingRecords.value} registros; puedes revisar el detalle y cargar registros adicionales.`
   return `Período validado: ${detected}. Puedes subir los registros.`
 })
-const canUpload = computed(() => rawEvents.value.length > 0 && periodMatches.value && !hasMixedPeriods.value && ['empty', 'loaded'].includes(periodStatus.value) && !isUploading.value)
+const canUpload = computed(() => rawEvents.value.length > 0 && periodMatches.value && !hasMixedPeriods.value && ['empty', 'loaded', 'unavailable'].includes(periodStatus.value) && !isUploading.value)
 
 let statusRequest = 0
 async function checkPeriodStatus() {
@@ -212,6 +212,14 @@ async function handleFileSelected(file: File) {
     fileName.value = file.name
     warnings.value = result.warnings
     activeTab.value = 'general'
+
+    if (result.detectedMonth) {
+      month.value = result.detectedMonth
+    }
+    if (result.detectedYear) {
+      year.value = result.detectedYear
+    }
+
     showToast(`Planilla analizada: ${result.events.length} registros listos para previsualizar.`, 'success')
     await checkPeriodStatus()
   } catch (error: any) {

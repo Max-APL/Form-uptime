@@ -41,4 +41,20 @@ describe('Excel Parser Unit Tests', () => {
       { month: 7, year: 2026, count: 1 },
     ]))
   })
+
+  it('parses real eventos agosto.xlsx file', async () => {
+    const fs = await import('fs')
+    const path = await import('path')
+    const fileBuf = fs.readFileSync(path.resolve(__dirname, '../../eventos agosto.xlsx'))
+    const res = await parseExcelBuffer(fileBuf)
+    console.log('REAL AGOSTO RESULT:', {
+      detectedMonth: res.detectedMonth,
+      detectedYear: res.detectedYear,
+      detectedPeriods: res.detectedPeriods,
+      warnings: res.warnings,
+      dates: res.events.map(e => e.fecha)
+    })
+    expect(res.detectedMonth).toBe(8)
+    expect(res.detectedPeriods).toHaveLength(1)
+  })
 })
