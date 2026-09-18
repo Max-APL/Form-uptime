@@ -13,7 +13,7 @@
       <!-- Header -->
       <div class="flex items-start justify-between border-b border-slate-100 pb-4">
         <div class="flex items-center gap-3">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#004D2C]/10 text-[#004D2C] border border-[#004D2C]/20">
             <Database class="h-5 w-5" />
           </div>
           <div>
@@ -37,7 +37,7 @@
 
       <!-- Loading comparison state -->
       <div v-if="isLoadingDb" class="py-12 flex flex-col items-center justify-center gap-2 text-slate-500 text-xs">
-        <Loader2 class="h-6 w-6 animate-spin text-blue-600" />
+        <Loader2 class="h-6 w-6 animate-spin text-[#004D2C]" />
         <span>Comparando con los registros actuales de la base de datos...</span>
       </div>
 
@@ -87,14 +87,14 @@
           </div>
 
           <!-- Total a Guardar -->
-          <div class="rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-center">
-            <div class="text-[11px] font-semibold text-blue-800 uppercase tracking-wider">
+          <div class="rounded-xl border border-[#004D2C]/20 bg-[#004D2C]/5 p-3 text-center">
+            <div class="text-[11px] font-semibold text-[#004D2C] uppercase tracking-wider">
               Total a Guardar
             </div>
-            <div class="mt-1 text-2xl font-black text-blue-700 font-mono">
+            <div class="mt-1 text-2xl font-black text-[#003B22] font-mono">
               {{ currentEvents.length }}
             </div>
-            <div class="text-[10px] text-blue-600">
+            <div class="text-[10px] text-[#004D2C]/80">
               Filas finales
             </div>
           </div>
@@ -146,8 +146,8 @@
         </div>
 
         <!-- Informative Alert -->
-        <div class="flex items-start gap-2.5 rounded-lg border border-blue-100 bg-blue-50/50 p-3 text-xs text-slate-600">
-          <CheckCircle2 class="h-4 w-4 shrink-0 text-blue-600 mt-0.5" />
+        <div class="flex items-start gap-2.5 rounded-lg border border-[#004D2C]/20 bg-[#004D2C]/5 p-3 text-xs text-slate-700">
+          <CheckCircle2 class="h-4 w-4 shrink-0 text-[#004D2C] mt-0.5" />
           <p>
             Al confirmar, se sincronizará el lote completo para <strong>{{ periodLabel }}</strong>. Las filas se guardarán directamente en Oracle y quedarán disponibles para reportes y auditoría.
           </p>
@@ -170,7 +170,7 @@
           type="button"
           @click="$emit('confirm')"
           :disabled="isSaving || currentEvents.length === 0"
-          class="flex items-center gap-1.5 rounded-lg bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          class="flex items-center gap-1.5 rounded-lg bg-[#004D2C] px-5 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#003B22] transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Database class="h-3.5 w-3.5" :class="{ 'animate-spin': isSaving }" />
           <span>{{ isSaving ? 'Guardando en Oracle...' : 'Confirmar y Guardar' }}</span>

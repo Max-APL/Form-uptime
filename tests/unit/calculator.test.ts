@@ -26,6 +26,11 @@ describe('Uptime & Downtime Calculator Engine', () => {
     expect(normalizeIndicator('IIBHIBM PROVEEDOR')).toBe('II-PROVEEDOR')
     expect(normalizeIndicator('II-PROGRAMADA')).toBe('II-PROGRAMADA')
     expect(normalizeIndicator('mantenimiento programado')).toBe('II-PROGRAMADA')
+    // Support production and custom indicator codes
+    expect(normalizeIndicator('IBI-FALLAS')).toBe('IBI-FALLAS')
+    expect(normalizeIndicator('IBI-PROVEEDOR')).toBe('IBI-PROVEEDOR')
+    expect(normalizeIndicator('IBI-PROGRAMADA')).toBe('IBI-PROGRAMADA')
+    expect(normalizeIndicator('REDES-01')).toBe('REDES-01')
   })
 
   it('parses duration strings and formats them', () => {

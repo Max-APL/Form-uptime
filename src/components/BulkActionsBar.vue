@@ -12,7 +12,7 @@
       class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-2xl border border-slate-300 bg-white/95 backdrop-blur-md px-4 py-2.5 text-xs shadow-xl"
     >
       <div class="flex items-center gap-2 border-r border-slate-200 pr-3">
-        <span class="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold">
+        <span class="flex h-6 w-6 items-center justify-center rounded-full bg-[#004D2C]/10 text-[#004D2C] font-bold">
           {{ selectedCount }}
         </span>
         <span class="font-semibold text-slate-800">filas seleccionadas</span>
@@ -40,12 +40,16 @@
         <!-- Change Indicator -->
         <select
           @change="onIndicatorSelect"
-          class="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 font-semibold text-slate-700 focus:border-blue-600 focus:outline-none cursor-pointer"
+          class="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 font-semibold text-slate-700 focus:border-[#004D2C] focus:outline-none cursor-pointer"
         >
           <option value="" disabled selected>Asignar Indicador...</option>
-          <option value="II-FALLAS">Asignar II-FALLAS</option>
-          <option value="II-PROVEEDOR">Asignar II-PROVEEDOR</option>
-          <option value="II-PROGRAMADA">Asignar II-PROGRAMADA</option>
+          <option
+            v-for="ind in (availableIndicators && availableIndicators.length ? availableIndicators : defaultIndicatorList)"
+            :key="ind"
+            :value="ind"
+          >
+            Asignar {{ ind }}
+          </option>
         </select>
 
         <!-- Delete selected -->
@@ -75,8 +79,15 @@
 import { CheckCircle2, Trash2 } from 'lucide-vue-next'
 import type { StandardIndicator } from '../types/uptime'
 
+const defaultIndicatorList = [
+  'II-FALLAS',
+  'II-PROVEEDOR',
+  'II-PROGRAMADA'
+]
+
 defineProps<{
   selectedCount: number
+  availableIndicators?: string[]
 }>()
 
 const emit = defineEmits<{

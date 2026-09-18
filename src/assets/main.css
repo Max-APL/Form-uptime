@@ -45,6 +45,12 @@
 
 .table-cell-input:focus {
   background: #ffffff;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 1px #2563eb;
+  border-color: #004d2c;
+  box-shadow: 0 0 0 1.5px rgba(0, 77, 44, 0.35);
+}
+
+/* Frozen column divider like Excel */
+.frozen-divider {
+  border-right: 2px solid #cbd5e1 !important;
+  box-shadow: 4px 0 10px -2px rgba(0, 40, 20, 0.10) !important;
 }

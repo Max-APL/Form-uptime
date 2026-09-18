@@ -5,7 +5,7 @@
       <!-- Modal Header -->
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <div class="flex items-center gap-2.5">
-          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#004D2C]/10 text-[#004D2C] border border-[#004D2C]/20">
             <BarChart3 class="h-4 w-4" />
           </div>
           <div>
@@ -35,8 +35,8 @@
               <th class="px-3 py-3 text-center font-semibold">Tiempo Caído</th>
               <th class="px-3 py-3 text-center font-semibold text-rose-700">Fallas (%)</th>
               <th class="px-3 py-3 text-center font-semibold text-amber-700">Proveedor (%)</th>
-              <th class="px-3 py-3 text-center font-semibold text-blue-700">Programada (%)</th>
-              <th class="px-4 py-3 text-center font-semibold text-blue-700">Disponibilidad (%)</th>
+              <th class="px-3 py-3 text-center font-semibold text-[#004D2C]">Programada (%)</th>
+              <th class="px-4 py-3 text-center font-semibold text-[#004D2C]">Disponibilidad (%)</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -66,15 +66,15 @@
             </tr>
 
             <!-- Global Average Footer Row -->
-            <tr class="bg-slate-50 font-bold border-t-2 border-blue-600 text-slate-900">
-              <td class="px-4 py-3 uppercase tracking-wider text-blue-900">Promedio General</td>
+            <tr class="bg-slate-50 font-bold border-t-2 border-[#004D2C] text-slate-900">
+              <td class="px-4 py-3 uppercase tracking-wider text-[#004D2C]">Promedio General</td>
               <td class="px-3 py-3 text-center font-mono">{{ report.summary.totalEvents }}</td>
               <td class="px-3 py-3 text-center font-mono text-emerald-700">{{ report.summary.totalDeclaredCount }}</td>
               <td class="px-3 py-3 text-center font-mono text-rose-600">{{ report.summary.totalDowntimeFormatted }}</td>
               <td class="px-3 py-3 text-center font-mono">{{ report.summary.averageFallasFormatted }}</td>
               <td class="px-3 py-3 text-center font-mono">{{ report.summary.averageProveedorFormatted }}</td>
               <td class="px-3 py-3 text-center font-mono">{{ report.summary.averageProgramadaFormatted }}</td>
-              <td class="px-4 py-3 text-center font-mono text-sm font-extrabold text-blue-700">
+              <td class="px-4 py-3 text-center font-mono text-sm font-extrabold text-[#004D2C]">
                 {{ report.summary.averageUptimeFormatted }}
               </td>
             </tr>
@@ -87,14 +87,14 @@
         <button
           type="button"
           @click="windowPrint"
-          class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 transition shadow-xs"
+          class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 transition shadow-xs cursor-pointer"
         >
           Imprimir Reporte
         </button>
         <button
           type="button"
           @click="$emit('close')"
-          class="rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-blue-700 transition shadow-xs"
+          class="rounded-lg bg-[#004D2C] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#003B22] transition shadow-xs cursor-pointer"
         >
           Cerrar
         </button>

@@ -1,21 +1,30 @@
 <template>
-  <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-md px-4 py-3 sm:px-6 lg:px-8">
-    <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4">
+  <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-md">
+    <!-- Corporate Top Brand Stripe -->
+    <div class="h-1 w-full bg-gradient-to-r from-[#004D2C] via-[#D39F28] to-[#004D2C]"></div>
+
+    <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-2.5 sm:px-6 lg:px-8">
       
       <!-- Brand & Period Selector -->
       <div class="flex items-center gap-4">
         <div class="flex items-center gap-3">
-          <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white shadow-xs">
-            <Activity class="h-4 w-4" />
-          </div>
+          <!-- BMSC Logo -->
+          <img
+            src="/bmsc-logo.png"
+            alt="Banco Mercantil Santa Cruz"
+            class="h-9 object-contain rounded-sm shadow-2xs"
+          />
+          <div class="hidden sm:block h-7 w-[1px] bg-slate-200"></div>
           <div>
             <div class="flex items-center gap-2">
-              <h1 class="text-sm font-bold tracking-tight text-slate-900">UPTIME V2</h1>
-              <span class="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 border border-blue-200">
-                PRO
+              <h1 class="text-xs sm:text-sm font-black tracking-tight text-slate-900 uppercase">
+                Control de Disponibilidad
+              </h1>
+              <span class="rounded bg-[#004D2C]/10 px-1.5 py-0.2 text-[10px] font-bold text-[#004D2C] border border-[#004D2C]/20">
+                V2
               </span>
             </div>
-            <p class="text-[11px] text-slate-500">Banco Mercantil Santa Cruz — Control de Disponibilidad</p>
+            <p class="text-[10px] text-slate-500 font-medium">BMSC — Gestión Operativa de Uptime</p>
           </div>
         </div>
 
@@ -23,7 +32,7 @@
 
         <!-- Period Selectors -->
         <div class="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
-          <Calendar class="ml-2 h-3.5 w-3.5 text-slate-500" />
+          <Calendar class="ml-2 h-3.5 w-3.5 text-[#004D2C]" />
           <select
             :value="month"
             @change="$emit('update:month', Number(($event.target as HTMLSelectElement).value))"
@@ -62,7 +71,7 @@
         <button
           type="button"
           @click="$emit('open-paste-modal')"
-          class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition shadow-xs"
+          class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition shadow-2xs cursor-pointer"
           title="Pegar filas copiadas de Excel (Ctrl+V)"
         >
           <ClipboardPaste class="h-3.5 w-3.5 text-slate-500" />
@@ -73,10 +82,10 @@
         <button
           type="button"
           @click="$emit('open-report-modal')"
-          class="flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50/70 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100/70 transition"
+          class="flex items-center gap-1.5 rounded-lg border border-[#004D2C]/30 bg-[#004D2C]/5 px-3 py-1.5 text-xs font-semibold text-[#004D2C] hover:bg-[#004D2C]/10 transition shadow-2xs cursor-pointer"
           title="Ver disponibilidad y métricas consolidadas"
         >
-          <BarChart3 class="h-3.5 w-3.5 text-blue-600" />
+          <BarChart3 class="h-3.5 w-3.5 text-[#004D2C]" />
           <span class="hidden sm:inline">Informe Uptime</span>
         </button>
 
@@ -84,7 +93,7 @@
         <button
           type="button"
           @click="$emit('export-excel')"
-          class="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100/70 transition"
+          class="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100/70 transition shadow-2xs cursor-pointer"
           title="Descargar reporte Excel (.xlsx)"
         >
           <FileSpreadsheet class="h-3.5 w-3.5 text-emerald-600" />
@@ -96,20 +105,21 @@
           type="button"
           @click="$emit('save-oracle')"
           :disabled="isSavingOracle || totalRecords === 0"
-          class="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-          title="Guardar eventos en la Base de Datos"
+          class="flex items-center gap-1.5 rounded-lg bg-[#004D2C] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-[#003B22] border border-[#003B22] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          title="Guardar eventos en la Base de Datos Oracle"
         >
           <Database class="h-3.5 w-3.5" :class="{ 'animate-spin': isSavingOracle }" />
           <span>{{ isSavingOracle ? 'Guardando...' : 'Guardar en la BD' }}</span>
         </button>
 
-        <!-- Quick Add Row Button -->
+        <!-- Quick Add Row Button (Corporate Mustard Accent) -->
         <button
           type="button"
           @click="$emit('add-row')"
-          class="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-slate-800"
+          class="flex items-center gap-1.5 rounded-lg bg-[#D39F28] px-3.5 py-1.5 text-xs font-bold text-slate-950 shadow-xs transition hover:bg-[#BE8D1F] border border-[#B3831D] cursor-pointer"
+          title="Agregar una nueva fila directamente en la tabla"
         >
-          <Plus class="h-3.5 w-3.5" />
+          <Plus class="h-3.5 w-3.5 text-slate-950" />
           <span>+ Incidente</span>
         </button>
 
@@ -121,7 +131,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import {
-  Activity,
   Calendar,
   ClipboardPaste,
   BarChart3,

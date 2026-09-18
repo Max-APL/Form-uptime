@@ -5,7 +5,7 @@
       <!-- Header -->
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <div class="flex items-center gap-2.5">
-          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#004D2C]/10 text-[#004D2C] border border-[#004D2C]/20">
             <ClipboardPaste class="h-4 w-4" />
           </div>
           <div>
@@ -34,14 +34,14 @@
             @input="handleTextChange"
             rows="6"
             placeholder="Pega aquí el contenido copiado de Excel (Ctrl+V)..."
-            class="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-xs font-mono text-slate-900 placeholder-slate-400 focus:bg-white focus:border-blue-600 focus:outline-none"
+            class="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-xs font-mono text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#004D2C] focus:outline-none"
           ></textarea>
         </div>
 
         <!-- Preview summary -->
-        <div v-if="parsedCount > 0" class="rounded-xl border border-blue-200 bg-blue-50/60 p-3">
+        <div v-if="parsedCount > 0" class="rounded-xl border border-[#004D2C]/20 bg-[#004D2C]/5 p-3">
           <div class="flex items-center justify-between">
-            <span class="font-bold text-blue-700 flex items-center gap-1.5">
+            <span class="font-bold text-[#004D2C] flex items-center gap-1.5">
               <CheckCircle2 class="h-4 w-4" />
               Se detectaron {{ parsedCount }} registro(s) listos para importar.
             </span>
@@ -51,15 +51,15 @@
           </p>
         </div>
 
-        <!-- Import Mode Selection -->
+        <!-- Mode selection -->
         <div class="flex items-center gap-4 pt-1">
-          <span class="font-bold text-slate-700">Modo de importación:</span>
+          <span class="font-semibold text-slate-700">Acción:</span>
           <label class="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
               v-model="importMode"
               value="append"
-              class="text-blue-600 focus:ring-blue-500"
+              class="text-[#004D2C] focus:ring-[#004D2C]"
             />
             <span class="text-slate-700">Añadir al final de la tabla</span>
           </label>
@@ -90,7 +90,7 @@
           type="button"
           @click="applyImport"
           :disabled="parsedCount === 0"
-          class="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          class="flex items-center gap-1.5 rounded-lg bg-[#004D2C] px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#003B22] disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
         >
           <Plus class="h-3.5 w-3.5" />
           <span>{{ importMode === 'replace' ? 'Reemplazar e Importar' : 'Agregar Registros' }}</span>

@@ -5,7 +5,7 @@
       <!-- Modal Header -->
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <div class="flex items-center gap-2.5">
-          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
+          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#004D2C]/10 text-[#004D2C] border border-[#004D2C]/20">
             <FileText class="h-4 w-4" />
           </div>
           <div>
@@ -41,7 +41,7 @@
                 list="modal-systems-datalist"
                 required
                 placeholder="Ej: CORE T24"
-                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-900 focus:border-blue-600 focus:outline-none"
+                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-900 focus:border-[#004D2C] focus:outline-none"
               />
               <datalist id="modal-systems-datalist">
                 <option v-for="sys in availableSystems" :key="sys" :value="sys" />
@@ -53,7 +53,7 @@
               <input
                 v-model="localRecord.componente"
                 placeholder="Ej: Base de Datos, API Gateway..."
-                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-900 focus:border-blue-600 focus:outline-none"
+                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-900 focus:border-[#004D2C] focus:outline-none"
               />
             </div>
           </div>
@@ -65,7 +65,7 @@
                 v-model="localRecord.fecha"
                 type="date"
                 required
-                class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-slate-900 focus:border-blue-600 focus:outline-none font-mono"
+                class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-slate-900 focus:border-[#004D2C] focus:outline-none font-mono"
               />
             </div>
 
@@ -77,7 +77,7 @@
                 step="1"
                 required
                 @input="recomputeDuration"
-                class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-slate-900 focus:border-blue-600 focus:outline-none font-mono"
+                class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-slate-900 focus:border-[#004D2C] focus:outline-none font-mono"
               />
             </div>
 
@@ -89,7 +89,7 @@
                 step="1"
                 required
                 @input="recomputeDuration"
-                class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-slate-900 focus:border-blue-600 focus:outline-none font-mono"
+                class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-slate-900 focus:border-[#004D2C] focus:outline-none font-mono"
               />
             </div>
           </div>
@@ -107,15 +107,35 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="block font-semibold text-slate-700 mb-1">Indicador *</label>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block font-semibold text-slate-700">Indicador *</label>
+                <button
+                  type="button"
+                  @click="isCustomIndicatorMode = !isCustomIndicatorMode"
+                  class="text-[11px] text-[#004D2C] hover:underline cursor-pointer font-medium"
+                >
+                  {{ isCustomIndicatorMode ? 'Elegir de lista' : '+ Personalizado' }}
+                </button>
+              </div>
+
+              <!-- Select existing -->
               <select
+                v-if="!isCustomIndicatorMode"
                 v-model="localRecord.indicador"
-                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-800 focus:border-blue-600 focus:outline-none"
+                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-800 focus:border-[#004D2C] focus:outline-none cursor-pointer"
               >
-                <option value="II-FALLAS">II-FALLAS (Incidente no programado)</option>
-                <option value="II-PROVEEDOR">II-PROVEEDOR (Causa externa/proveedor)</option>
-                <option value="II-PROGRAMADA">II-PROGRAMADA (Ventana de mantenimiento)</option>
+                <option v-for="ind in modalIndicatorOptions" :key="ind" :value="ind">
+                  {{ ind }}
+                </option>
               </select>
+
+              <!-- Custom Text Input -->
+              <input
+                v-else
+                v-model="localRecord.indicador"
+                placeholder="Ej: IBI-FALLAS"
+                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-bold uppercase text-slate-900 focus:border-[#004D2C] focus:outline-none"
+              />
             </div>
 
             <div>
@@ -123,7 +143,7 @@
               <input
                 v-model="localRecord.responsable"
                 placeholder="Ej: Infraestructura, DBA, Canales..."
-                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-900 focus:border-blue-600 focus:outline-none"
+                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-900 focus:border-[#004D2C] focus:outline-none"
               />
             </div>
           </div>
@@ -134,7 +154,7 @@
               <input
                 v-model="localRecord.origen"
                 placeholder="Ej: Monitoreo Zabbix, Dynatrace..."
-                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-900 focus:border-blue-600 focus:outline-none"
+                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-900 focus:border-[#004D2C] focus:outline-none"
               />
             </div>
 
@@ -144,7 +164,7 @@
                 <input
                   type="checkbox"
                   v-model="localRecord.declarado"
-                  class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  class="h-4 w-4 rounded border-slate-300 text-[#004D2C] focus:ring-[#004D2C]"
                 />
                 <span class="font-semibold" :class="localRecord.declarado ? 'text-emerald-700' : 'text-slate-500'">
                   {{ localRecord.declarado ? 'Declarado Oficialmente (SÍ)' : 'No declarado (NO)' }}
@@ -163,7 +183,7 @@
             <input
               v-model="localRecord.bitacora"
               placeholder="Ej: INC-2026-0041"
-              class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-900 focus:border-blue-600 focus:outline-none font-mono"
+              class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-900 focus:border-[#004D2C] focus:outline-none font-mono"
             />
           </div>
 
@@ -173,7 +193,7 @@
               v-model="localRecord.motivo"
               rows="2"
               placeholder="Descripción de la causa o síntomas observados..."
-              class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none"
+              class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-900 placeholder-slate-400 focus:border-[#004D2C] focus:outline-none"
             ></textarea>
           </div>
 
@@ -183,7 +203,7 @@
               v-model="localRecord.solucion"
               rows="2"
               placeholder="Acción correctiva o procedimiento ejecutado para resolver la caída..."
-              class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none"
+              class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-900 placeholder-slate-400 focus:border-[#004D2C] focus:outline-none"
             ></textarea>
           </div>
         </div>
@@ -193,13 +213,13 @@
           <button
             type="button"
             @click="$emit('close')"
-            class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 shadow-xs"
+            class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 shadow-xs cursor-pointer"
           >
             Cancelar
           </button>
           <button
             type="submit"
-            class="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 shadow-xs transition"
+            class="flex items-center gap-1.5 rounded-lg bg-[#004D2C] px-4 py-2 text-xs font-bold text-white hover:bg-[#003B22] shadow-xs transition cursor-pointer"
           >
             <Check class="h-3.5 w-3.5" />
             <span>{{ isNew ? 'Agregar a la Tabla' : 'Guardar Cambios' }}</span>
@@ -213,16 +233,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { FileText, Check } from 'lucide-vue-next'
 import type { EventRecordV2 } from '../types/uptime'
 import { calculateDurationFromTimes, formatSecondsToHHMMSS } from '../utils/calculator'
+
+const defaultIndicatorOptions = [
+  'II-FALLAS',
+  'II-PROVEEDOR',
+  'II-PROGRAMADA'
+]
 
 const props = defineProps<{
   isOpen: boolean
   record: EventRecordV2 | null
   isNew?: boolean
   availableSystems?: string[]
+  availableIndicators?: string[]
 }>()
 
 const emit = defineEmits<{
@@ -231,12 +258,27 @@ const emit = defineEmits<{
 }>()
 
 const localRecord = ref<EventRecordV2 | null>(null)
+const isCustomIndicatorMode = ref(false)
+
+const modalIndicatorOptions = computed(() => {
+  const set = new Set<string>(defaultIndicatorOptions)
+  if (props.availableIndicators) {
+    props.availableIndicators.forEach(i => set.add(i))
+  }
+  if (localRecord.value?.indicador) {
+    set.add(localRecord.value.indicador.trim().toUpperCase())
+  }
+  return Array.from(set)
+})
 
 watch(() => props.record, (newVal) => {
   if (newVal) {
     localRecord.value = JSON.parse(JSON.stringify(newVal))
+    // If the record has a custom indicator not in defaults, make sure it's in options
+    isCustomIndicatorMode.value = false
   } else {
     localRecord.value = null
+    isCustomIndicatorMode.value = false
   }
 }, { immediate: true })
 
@@ -251,6 +293,9 @@ function recomputeDuration() {
 
 function handleSave() {
   if (!localRecord.value || !localRecord.value.sistema.trim()) return
+  if (localRecord.value.indicador) {
+    localRecord.value.indicador = localRecord.value.indicador.trim().toUpperCase()
+  }
   recomputeDuration()
   emit('save', localRecord.value)
   emit('close')

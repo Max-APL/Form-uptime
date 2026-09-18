@@ -69,6 +69,13 @@ export function getDaysInMonth(year: number, month: number): number {
 export function normalizeIndicator(raw: string): StandardIndicator {
   if (!raw) return 'II-FALLAS'
   const upper = raw.trim().toUpperCase()
+
+  // Preserve explicit structured codes (e.g., IBI-FALLAS, II-PROVEEDOR, IBI-PROGRAMADA, RED-01)
+  if (/^[A-Z0-9]+-[A-Z0-9_-]+$/.test(upper)) {
+    return upper
+  }
+
+  // Fallback heuristic matching for natural language descriptions
   if (upper.includes('PROVEEDOR') || upper.includes('PROV')) {
     return 'II-PROVEEDOR'
   }
@@ -213,10 +220,10 @@ export function calculateUptimeMetricsV2(
         sec = calculateDurationFromTimes(ev.horaInicio, ev.horaFin)
       }
 
-      const ind = normalizeIndicator(ev.indicador)
-      if (ind === 'II-PROVEEDOR') {
+      const ind = (ev.indicador || '').toUpperCase()
+      if (ind.includes('PROVEEDOR') || ind.includes('PROV')) {
         proveedorSec += sec
-      } else if (ind === 'II-PROGRAMADA') {
+      } else if (ind.includes('PROGRAMADA') || ind.includes('PROG')) {
         programadaSec += sec
       } else {
         fallasSec += sec
