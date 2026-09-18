@@ -9,10 +9,13 @@ const dbConfig = {
   connectString: process.env.ORACLE_CONNECT_STRING || '127.0.0.1:1521/XEPDB1'
 }
 
+const TABLE_NAME = process.env.ORACLE_TABLE_NAME || 'EVENTOS_DOWNTIME'
+
 async function queryEvents() {
   console.log('\n🔍 Conectando a Oracle Database...')
   console.log(`   Host/Cadena: ${dbConfig.connectString}`)
-  console.log(`   Usuario:     ${dbConfig.user}\n`)
+  console.log(`   Usuario:     ${dbConfig.user}`)
+  console.log(`   Tabla:       ${TABLE_NAME}\n`)
 
   let connection
   try {
@@ -20,12 +23,12 @@ async function queryEvents() {
     console.log('✅ Conexión establecida con éxito.\n')
 
     // 1. Total records count
-    const countRes = await connection.execute('SELECT COUNT(*) AS TOTAL FROM EVENTOS_DOWNTIME')
+    const countRes = await connection.execute(`SELECT COUNT(*) AS TOTAL FROM ${TABLE_NAME}`)
     const totalRows = countRes.rows[0][0]
-    console.log(`📊 Total de registros en EVENTOS_DOWNTIME: ${totalRows}\n`)
+    console.log(`📊 Total de registros en ${TABLE_NAME}: ${totalRows}\n`)
 
     if (totalRows === 0) {
-      console.log('ℹ️ La tabla EVENTOS_DOWNTIME está vacía. Puedes subir un Excel desde la web para cargar datos.\n')
+      console.log(`ℹ️ La tabla ${TABLE_NAME} está vacía. Puedes agregar registros desde la interfaz web o sincronizarlos.\n`)
       return
     }
 
@@ -34,12 +37,16 @@ async function queryEvents() {
       SELECT 
         ID_EVENTO,
         SISTEMA,
+        COMPONENTE,
         TO_CHAR(FINI_CAIDA, 'YYYY-MM-DD HH24:MI:SS') AS INICIO,
         TO_CHAR(FFIN_CAIDA, 'YYYY-MM-DD HH24:MI:SS') AS FIN,
         INDICADOR,
-        SUBSTR(MOTIVO, 1, 40) AS MOTIVO_CORTO,
-        TO_CHAR(CREADO_EN, 'YYYY-MM-DD HH24:MI:SS') AS CREADO_EN
-      FROM EVENTOS_DOWNTIME
+        RESPONSABLE,
+        ORIGEN,
+        DECLARADO,
+        BITACORA,
+        SUBSTR(MOTIVO, 1, 30) AS MOTIVO_CORTO
+      FROM ${TABLE_NAME}
       ORDER BY ID_EVENTO DESC
       FETCH FIRST 20 ROWS ONLY
     `
@@ -51,16 +58,12 @@ async function queryEvents() {
 
   } catch (err) {
     console.error('❌ Error al consultar Oracle:', err.message)
-    console.log('\n💡 Sugerencias:')
-    console.log('   1. Revisa que tu base de datos Oracle esté encendida y accesible.')
-    console.log('   2. Verifica tus credenciales en el archivo .env.')
-    console.log('   3. Si no has creado la tabla, puedes ejecutar "npm run db:init".\n')
   } finally {
     if (connection) {
       try {
         await connection.close()
       } catch (closeErr) {
-        console.error('Error cerrando conexión:', closeErr)
+        console.error(closeErr)
       }
     }
   }

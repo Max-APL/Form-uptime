@@ -1,105 +1,99 @@
 <template>
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-    <!-- Card 1: Disponibilidad Promedio -->
-    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Disponibilidad Promedio</span>
-        <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
+  <!-- Subtle, non-dashboard summary bar (minimalist enterprise status strip) -->
+  <div class="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-xs text-slate-600 shadow-2xs">
+    <div class="flex flex-wrap items-center justify-between gap-y-2 gap-x-6">
+      
+      <!-- Left: Title / Label -->
+      <div class="flex items-center gap-2">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Resumen Período:</span>
       </div>
-      <div class="mt-2 flex items-baseline justify-between">
-        <span class="text-2xl font-extrabold text-slate-900 font-mono">{{ report.summary.averageUptimeFormatted }}</span>
-        <span
-          :class="[
-            'text-xs font-semibold px-2 py-0.5 rounded border',
-            report.summary.averageUptime >= 99.9
-              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-              : report.summary.averageUptime >= 99.0
-              ? 'bg-amber-50 text-amber-700 border-amber-200'
-              : 'bg-rose-50 text-rose-700 border-rose-200'
-          ]"
-        >
-          {{ report.summary.averageUptime >= 99.9 ? 'Óptimo' : report.summary.averageUptime >= 99.0 ? 'Aceptable' : 'Alerta' }}
-        </span>
-      </div>
-      <p class="text-xs text-slate-500 mt-1">Meta corporativa: 99.9000%</p>
-    </div>
 
-    <!-- Card 2: Total Downtime Acumulado -->
-    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Indisponibilidad</span>
-        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+      <!-- Center: Key Metrics Strip (Subtle, inline, neutral) -->
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-1.5">
+        
+        <!-- Disponibilidad -->
+        <div class="flex items-center gap-1.5">
+          <span class="text-slate-500">Disponibilidad:</span>
+          <span class="font-mono font-bold text-slate-900">{{ summary.averageUptimeFormatted }}</span>
+          <span
+            class="rounded px-1.5 py-0.2 text-[10px] font-semibold"
+            :class="uptimeBadgeClass"
+          >
+            {{ uptimeStatusLabel }}
+          </span>
         </div>
-      </div>
-      <div class="mt-2 flex items-baseline justify-between">
-        <span class="text-2xl font-extrabold text-slate-900 font-mono">{{ report.summary.totalDowntimeFormatted }}</span>
-        <span class="text-xs font-medium text-slate-500">HH:MM:SS</span>
-      </div>
-      <p class="text-xs text-slate-500 mt-1">Promedio por sistema: {{ report.summary.averageTotalDowntimeFormatted }}</p>
-    </div>
 
-    <!-- Card 3: Total Eventos de Caída -->
-    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Eventos Registrados</span>
-        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-        </div>
-      </div>
-      <div class="mt-2 flex items-baseline justify-between">
-        <span class="text-2xl font-extrabold text-slate-900 font-mono">{{ report.summary.totalEvents }}</span>
-        <span class="text-xs font-medium text-slate-500">incidentes</span>
-      </div>
-      <p class="text-xs text-slate-500 mt-1">{{ report.summary.affectedSystemsCount }} de {{ report.systems.length }} sistemas con caídas</p>
-    </div>
+        <span class="hidden sm:inline text-slate-300">|</span>
 
-    <!-- Card 4: Desglose por Causa -->
-    <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Causa Principal</span>
-        <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center border border-slate-200">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
-          </svg>
+        <!-- Tiempo de Caída -->
+        <div class="flex items-center gap-1.5">
+          <span class="text-slate-500">Tiempo abajo:</span>
+          <span class="font-mono font-semibold text-slate-900">{{ summary.totalDowntimeFormatted }}</span>
+          <span class="text-[11px] text-slate-400">({{ totalMinutesText }})</span>
         </div>
+
+        <span class="hidden sm:inline text-slate-300">|</span>
+
+        <!-- Total Incidentes -->
+        <div class="flex items-center gap-1.5">
+          <span class="text-slate-500">Incidentes:</span>
+          <span class="font-mono font-semibold text-slate-900">{{ summary.totalEvents }}</span>
+          <span class="text-[11px] text-slate-500">
+            ({{ summary.totalDeclaredCount }} declarados, {{ summary.totalUndeclaredCount }} no declarados)
+          </span>
+        </div>
+
+        <span class="hidden md:inline text-slate-300">|</span>
+
+        <!-- Indicadores -->
+        <div class="hidden md:flex items-center gap-3 text-[11px] text-slate-500">
+          <span>Fallas: <strong class="font-mono text-slate-700">{{ summary.averageFallasFormatted }}</strong></span>
+          <span>Proveedor: <strong class="font-mono text-slate-700">{{ summary.averageProveedorFormatted }}</strong></span>
+          <span>Programada: <strong class="font-mono text-slate-700">{{ summary.averageProgramadaFormatted }}</strong></span>
+        </div>
+
       </div>
-      <div class="mt-2 flex items-baseline justify-between">
-        <span class="text-lg font-bold text-slate-800">
-          {{ mainCause }}
-        </span>
+
+      <!-- Right: Systems count info -->
+      <div class="text-[11px] text-slate-400">
+        {{ affectedCountText }}
       </div>
-      <p class="text-xs text-slate-500 mt-1 font-mono">
-        Fallas: {{ report.summary.averageFallasFormatted }} | Prog: {{ report.summary.averageProgramadaFormatted }}
-      </p>
+
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ConsolidatedReport } from '../types/uptime'
+import type { GlobalAverageSummaryV2 } from '../types/uptime'
 
 const props = defineProps<{
-  report: ConsolidatedReport
+  summary: GlobalAverageSummaryV2
 }>()
 
-const mainCause = computed(() => {
-  const f = props.report.summary.averageFallas
-  const p = props.report.summary.averageProgramada
-  const pr = props.report.summary.averageProveedor
+const uptimeStatusLabel = computed(() => {
+  if (props.summary.averageUptime >= 99.9) return 'Óptimo'
+  if (props.summary.averageUptime >= 99.0) return 'Aceptable'
+  return 'Crítico'
+})
 
-  if (f === 0 && p === 0 && pr === 0) return 'Sin incidentes'
-  if (f >= p && f >= pr) return 'II-FALLAS'
-  if (p >= f && p >= pr) return 'II-PROGRAMADA'
-  return 'II-PROVEEDOR'
+const uptimeBadgeClass = computed(() => {
+  if (props.summary.averageUptime >= 99.9) {
+    return 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+  }
+  if (props.summary.averageUptime >= 99.0) {
+    return 'bg-amber-50 text-amber-700 border border-amber-200'
+  }
+  return 'bg-rose-50 text-rose-700 border border-rose-200'
+})
+
+const affectedCountText = computed(() => {
+  if (props.summary.affectedSystemsCount === 0) return '0 sistemas con caída'
+  return `${props.summary.affectedSystemsCount} sistema(s) afectados`
+})
+
+const totalMinutesText = computed(() => {
+  const min = Math.round(props.summary.totalDowntimeSeconds / 60)
+  return `${min.toLocaleString('es-BO')} min`
 })
 </script>

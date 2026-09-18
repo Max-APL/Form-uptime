@@ -1,10 +1,10 @@
 import type {
-  ConsolidatedReport,
-  GlobalAverageSummary,
+  ConsolidatedReportV2,
+  EventRecordV2,
+  GlobalAverageSummaryV2,
   IndicatorBreakdown,
-  RawEventRecord,
   StandardIndicator,
-  SystemMonthlyMetrics
+  SystemMonthlyMetricsV2
 } from '../types/uptime'
 
 export const DEFAULT_SYSTEMS = [
@@ -17,6 +17,39 @@ export const DEFAULT_SYSTEMS = [
   'ACH',
   'ONBASE',
   'SWIFT'
+]
+
+export const DEFAULT_COMPONENTS = [
+  'Base de Datos',
+  'Servidor de Aplicaciones',
+  'API Gateway',
+  'Red y Firewall',
+  'Canal Digital',
+  'Switch Transaccional',
+  'Almacenamiento SAN',
+  'Enlace de Comunicaciones',
+  'Servicio Web',
+  'Cola de Mensajería'
+]
+
+export const DEFAULT_RESPONSIBLES = [
+  'Infraestructura',
+  'DBA',
+  'Desarrollo Canales',
+  'Redes y Comunicaciones',
+  'Soporte N2',
+  'Seguridad de la Información',
+  'Proveedor Externo',
+  'Operaciones TI'
+]
+
+export const DEFAULT_ORIGINS = [
+  'Monitoreo Zabbix',
+  'Alerta Dynatrace',
+  'Reporte Mesa de Ayuda',
+  'Reporte de Sucursal',
+  'Notificación Proveedor',
+  'Detección Operativa'
 ]
 
 const MONTH_NAMES_ES = [
@@ -33,12 +66,6 @@ export function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate()
 }
 
-/**
- * Normalizes indicator strings to the standard BMSC categories:
- * - II-PROVEEDOR
- * - II-PROGRAMADA
- * - II-FALLAS
- */
 export function normalizeIndicator(raw: string): StandardIndicator {
   if (!raw) return 'II-FALLAS'
   const upper = raw.trim().toUpperCase()
@@ -48,54 +75,40 @@ export function normalizeIndicator(raw: string): StandardIndicator {
   if (upper.includes('PROGRAMADA') || upper.includes('PROG')) {
     return 'II-PROGRAMADA'
   }
-  if (upper.includes('FALLA') || upper.includes('FALLAS')) {
-    return 'II-FALLAS'
-  }
   return 'II-FALLAS'
 }
 
-/**
- * Parses a duration from string (e.g. "00:41:00", "06:52", "1:30:15") or Excel fractional number into total seconds.
- */
 export function parseDurationToSeconds(val: string | number | null | undefined): number {
   if (val === null || val === undefined || val === '') return 0
   
   if (typeof val === 'number') {
-    // If it's an Excel time fraction (where 1.0 = 24 hours)
     if (val < 1.0 && val > 0) {
       return Math.round(val * 86400)
     }
-    // If it's already in seconds or minutes
     return Math.round(val)
   }
 
   const str = String(val).trim()
   if (!str || str === '-' || str === '0') return 0
 
-  // Check formats: HH:MM:SS or HH:MM or MM:SS
   const parts = str.split(':').map(p => {
     const clean = p.replace(/[^0-9.]/g, '')
     return parseFloat(clean) || 0
   })
 
   if (parts.length === 3) {
-    // HH:MM:SS
     const [hours, minutes, seconds] = parts
     return Math.round(hours * 3600 + minutes * 60 + seconds)
   } else if (parts.length === 2) {
-    // HH:MM
     const [hours, minutes] = parts
     return Math.round(hours * 3600 + minutes * 60)
   } else if (parts.length === 1) {
-    return Math.round(parts[0] * 60) // Assume minutes if single number
+    return Math.round(parts[0] * 60)
   }
 
   return 0
 }
 
-/**
- * Calculates duration in seconds between start time and end time strings if duration was empty.
- */
 export function calculateDurationFromTimes(startTime: string, endTime: string): number {
   if (!startTime || !endTime) return 0
 
@@ -125,9 +138,6 @@ export function calculateDurationFromTimes(startTime: string, endTime: string): 
   }
 }
 
-/**
- * Formats seconds into HH:MM:SS
- */
 export function formatSecondsToHHMMSS(totalSeconds: number): string {
   const safeSec = Math.max(0, Math.round(totalSeconds))
   const hours = Math.floor(safeSec / 3600)
@@ -138,9 +148,6 @@ export function formatSecondsToHHMMSS(totalSeconds: number): string {
   return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
 }
 
-/**
- * Formats seconds into HH:MM (as used in Reporte de Tecnología)
- */
 export function formatSecondsToHHMM(totalSeconds: number): string {
   const safeSec = Math.max(0, Math.round(totalSeconds))
   const hours = Math.floor(safeSec / 3600)
@@ -150,55 +157,52 @@ export function formatSecondsToHHMM(totalSeconds: number): string {
   return `${pad(hours)}:${pad(minutes)}`
 }
 
-/**
- * Formats percentage number to Spanish locale string with 4 decimals e.g. "99,9051%" or "0,0949%"
- */
 export function formatPercentSpanish(value: number): string {
   if (isNaN(value) || !isFinite(value)) return '0,0000%'
   const formatted = value.toFixed(4).replace('.', ',')
   return `${formatted}%`
 }
 
-/**
- * Calculates complete monthly Uptime and Downtime metrics for all systems.
- */
-export function calculateUptimeMetrics(
-  events: RawEventRecord[],
+export function calculateUptimeMetricsV2(
+  events: EventRecordV2[],
   year: number,
   month: number,
   customCatalog?: string[]
-): ConsolidatedReport {
+): ConsolidatedReportV2 {
   const daysInMonth = getDaysInMonth(year, month)
   const totalMonthHours = daysInMonth * 24
   const totalMonthMinutes = totalMonthHours * 60
   const totalMonthSeconds = totalMonthMinutes * 60
   const monthName = getMonthNameSpanish(month)
 
-  // Build the list of active systems: custom catalog + any systems in events not in catalog
   const catalog = customCatalog !== undefined ? [...customCatalog] : [...DEFAULT_SYSTEMS]
   const systemsOrder: string[] = [...catalog]
 
   for (const ev of events) {
-    const sysTrim = ev.sistema.trim()
+    const sysTrim = (ev.sistema || '').trim()
     if (sysTrim && !systemsOrder.some(s => s.trim().toUpperCase() === sysTrim.toUpperCase())) {
       systemsOrder.push(sysTrim)
     }
   }
 
-  const systemMetricsList: SystemMonthlyMetrics[] = []
+  const systemMetricsList: SystemMonthlyMetricsV2[] = []
 
   let totalEventsCount = 0
   let affectedSystemsCount = 0
   let globalTotalDowntimeSeconds = 0
+  let totalDeclaredCount = 0
+  let totalUndeclaredCount = 0
 
   for (const systemName of systemsOrder) {
     const sysEvents = events.filter(
-      e => e.sistema.trim().toUpperCase() === systemName.trim().toUpperCase()
+      e => (e.sistema || '').trim().toUpperCase() === systemName.trim().toUpperCase()
     )
 
     let proveedorSec = 0
     let programadaSec = 0
     let fallasSec = 0
+    let sysDeclaredCount = 0
+    let sysUndeclaredCount = 0
 
     for (const ev of sysEvents) {
       let sec = ev.durationSeconds
@@ -217,6 +221,14 @@ export function calculateUptimeMetrics(
       } else {
         fallasSec += sec
       }
+
+      if (ev.declarado) {
+        sysDeclaredCount++
+        totalDeclaredCount++
+      } else {
+        sysUndeclaredCount++
+        totalUndeclaredCount++
+      }
     }
 
     const totalDowntimeSec = proveedorSec + programadaSec + fallasSec
@@ -228,7 +240,6 @@ export function calculateUptimeMetrics(
     totalEventsCount += sysEvents.length
     globalTotalDowntimeSeconds += totalDowntimeSec
 
-    // Percentage calculations
     const proveedorPercent = (proveedorSec / totalMonthSeconds) * 100
     const programadaPercent = (programadaSec / totalMonthSeconds) * 100
     const fallasPercent = (fallasSec / totalMonthSeconds) * 100
@@ -274,6 +285,8 @@ export function calculateUptimeMetrics(
       uptimePercent,
       uptimePercentFormatted: formatPercentSpanish(uptimePercent),
       totalPercentFormatted: '100,0000%',
+      declaredCount: sysDeclaredCount,
+      undeclaredCount: sysUndeclaredCount,
       indicators: {
         proveedor: proveedorBreakdown,
         programada: programadaBreakdown,
@@ -282,7 +295,6 @@ export function calculateUptimeMetrics(
     })
   }
 
-  // Calculate arithmetic averages across systems
   const count = systemMetricsList.length || 1
   const sumUptime = systemMetricsList.reduce((acc, s) => acc + s.uptimePercent, 0)
   const sumProveedor = systemMetricsList.reduce((acc, s) => acc + s.indicators.proveedor.percent, 0)
@@ -296,7 +308,7 @@ export function calculateUptimeMetrics(
   const averageFallas = sumFallas / count
   const averageTotalDowntime = sumDowntime / count
 
-  const summary: GlobalAverageSummary = {
+  const summary: GlobalAverageSummaryV2 = {
     averageUptime,
     averageUptimeFormatted: formatPercentSpanish(averageUptime),
     averageProveedor,
@@ -310,6 +322,8 @@ export function calculateUptimeMetrics(
     totalDowntimeSeconds: globalTotalDowntimeSeconds,
     totalDowntimeFormatted: formatSecondsToHHMMSS(globalTotalDowntimeSeconds),
     totalEvents: totalEventsCount,
+    totalDeclaredCount,
+    totalUndeclaredCount,
     affectedSystemsCount
   }
 
@@ -324,3 +338,6 @@ export function calculateUptimeMetrics(
     summary
   }
 }
+
+// Alias for backwards compatibility
+export const calculateUptimeMetrics = calculateUptimeMetricsV2
