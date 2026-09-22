@@ -26,13 +26,38 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
         <div>
           <label class="block font-semibold text-slate-700 mb-1">Tipo de Enlace por defecto:</label>
+          <!-- Custom Enlace Input Mode in Modal -->
+          <div v-if="isCustomEnlaceInModal" class="flex items-center gap-1">
+            <input
+              v-model="customEnlaceModalInput"
+              @input="handleCustomModalInputChange"
+              placeholder="Ej: ENLACES SATELITALES"
+              class="w-full rounded-lg border border-[#004D2C] bg-white px-2.5 py-1.5 text-xs font-bold uppercase text-slate-900 focus:outline-none shadow-2xs"
+              autofocus
+            />
+            <button
+              type="button"
+              @click="cancelCustomModalEnlace"
+              class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer"
+              title="Volver al selector"
+            >
+              ✕
+            </button>
+          </div>
+
+          <!-- Select Mode in Modal -->
           <select
-            v-model="selectedEnlace"
-            @change="handleTextChange"
-            class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:border-[#004D2C] focus:outline-none"
+            v-else
+            :value="selectedEnlace"
+            @change="handleModalEnlaceSelect"
+            class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:border-[#004D2C] focus:outline-none cursor-pointer"
           >
             <option v-for="enl in DEFAULT_ENLACES" :key="enl" :value="enl">
               {{ enl }}
+            </option>
+            <option disabled>──────────</option>
+            <option value="__CUSTOM_NEW__" class="text-[#004D2C] font-semibold">
+              ✏️ + Personalizar nuevo enlace...
             </option>
           </select>
         </div>
@@ -50,7 +75,7 @@
       <!-- Instructions & Textarea -->
       <div class="space-y-3 text-xs">
         <p class="text-slate-600">
-          El sistema detecta automáticamente columnas copiadas de Excel (e.g. <em>Departamento, Nombre/Agencia/ATM, Uptime Mensual %, Uptime Anual %</em>).
+          El sistema detecta automáticamente columnas copiadas de Excel (e.g. <em>Departamento, Proveedor / Agencia / Nombre, Uptime Mensual %, Uptime Anual %</em>).
         </p>
 
         <div class="relative">
@@ -145,10 +170,35 @@ const emit = defineEmits<{
 
 const pasteText = ref('')
 const importMode = ref<'append' | 'replace'>('append')
-const selectedEnlace = ref(DEFAULT_ENLACES[0])
+const selectedEnlace = ref<string>(DEFAULT_ENLACES[0])
 const referenceDate = ref(props.defaultReferenceDate || new Date().toISOString().slice(0, 10))
 
 const parsedRecords = ref<NetworkEventRecord[]>([])
+const isCustomEnlaceInModal = ref(false)
+const customEnlaceModalInput = ref('')
+
+function handleModalEnlaceSelect(e: Event) {
+  const val = (e.target as HTMLSelectElement).value
+  if (val === '__CUSTOM_NEW__') {
+    isCustomEnlaceInModal.value = true
+    customEnlaceModalInput.value = ''
+  } else {
+    selectedEnlace.value = val
+    handleTextChange()
+  }
+}
+
+function handleCustomModalInputChange() {
+  const clean = customEnlaceModalInput.value.trim().toUpperCase()
+  selectedEnlace.value = clean || DEFAULT_ENLACES[0]
+  handleTextChange()
+}
+
+function cancelCustomModalEnlace() {
+  isCustomEnlaceInModal.value = false
+  selectedEnlace.value = DEFAULT_ENLACES[0]
+  handleTextChange()
+}
 
 function handleTextChange() {
   if (!pasteText.value.trim()) {

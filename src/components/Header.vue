@@ -124,17 +124,6 @@
             <Database class="h-3.5 w-3.5" :class="{ 'animate-spin': isSavingOracle }" />
             <span>{{ isSavingOracle ? 'Guardando...' : 'Guardar BD' }}</span>
           </button>
-
-          <!-- Quick Add Row Button (Corporate Mustard Accent) -->
-          <button
-            type="button"
-            @click="$emit('add-row')"
-            class="flex items-center gap-1.5 rounded-lg bg-[#D39F28] px-3.5 py-1.5 text-xs font-bold text-slate-950 shadow-xs transition hover:bg-[#BE8D1F] border border-[#B3831D] cursor-pointer"
-            title="Agregar una nueva caída directamente en la tabla"
-          >
-            <Plus class="h-3.5 w-3.5 text-slate-950" />
-            <span>+ Incidente</span>
-          </button>
         </template>
 
         <!-- ================= REDES ACTIONS ================= -->
@@ -171,17 +160,6 @@
           >
             <Database class="h-3.5 w-3.5" :class="{ 'animate-spin': isSavingOracle }" />
             <span>{{ isSavingOracle ? 'Guardando...' : 'Guardar BD' }}</span>
-          </button>
-
-          <!-- Quick Add Network Row -->
-          <button
-            type="button"
-            @click="$emit('add-network-row')"
-            class="flex items-center gap-1.5 rounded-lg bg-[#D39F28] px-3.5 py-1.5 text-xs font-bold text-slate-950 shadow-xs transition hover:bg-[#BE8D1F] border border-[#B3831D] cursor-pointer"
-            title="Agregar una nueva fila de enlace de red"
-          >
-            <Plus class="h-3.5 w-3.5 text-slate-950" />
-            <span>+ Enlace</span>
           </button>
         </template>
 
@@ -256,7 +234,6 @@ import {
   FileText,
   FileSpreadsheet,
   Database,
-  Plus,
   Server,
   Network
 } from 'lucide-vue-next'
@@ -281,8 +258,6 @@ defineEmits<{
   (e: 'update:year', val: number): void
   (e: 'update:month', val: number): void
   (e: 'update:activeTab', val: 'sistemas' | 'redes'): void
-  (e: 'add-row'): void
-  (e: 'add-network-row'): void
   (e: 'open-paste-modal'): void
   (e: 'open-network-paste-modal'): void
   (e: 'open-report-modal'): void

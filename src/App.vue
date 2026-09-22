@@ -123,7 +123,7 @@
       @close="showOfficialReportModal = false"
     />
 
-    <!-- Save to DB Confirmation Modal -->
+    <!-- Save to DB Confirmation Modal for Sistemas -->
     <SaveDbConfirmModal
       :is-open="showSaveConfirmModal"
       :year="year"
@@ -133,6 +133,18 @@
       :is-saving="isSavingOracle"
       @close="showSaveConfirmModal = false"
       @confirm="executeSaveToOracle"
+    />
+
+    <!-- Save to DB Confirmation Modal for Enlaces de Red -->
+    <SaveNetworkDbConfirmModal
+      :is-open="showSaveNetworkConfirmModal"
+      :year="year"
+      :month="month"
+      :month-name="report.monthName"
+      :current-records="networkRecords"
+      :is-saving="isSavingNetworkOracle"
+      @close="showSaveNetworkConfirmModal = false"
+      @confirm="executeSaveNetworkToOracle"
     />
 
     <!-- Footer -->
@@ -166,6 +178,7 @@ import RowEditorModal from './components/RowEditorModal.vue'
 import ConsolidatedReportModal from './components/ConsolidatedReportModal.vue'
 import OfficialReportModal from './components/OfficialReportModal.vue'
 import SaveDbConfirmModal from './components/SaveDbConfirmModal.vue'
+import SaveNetworkDbConfirmModal from './components/SaveNetworkDbConfirmModal.vue'
 
 // Active tab ('sistemas' | 'redes')
 const activeTab = ref<'sistemas' | 'redes'>('sistemas')
@@ -198,6 +211,7 @@ const networkDraftTimestamp = ref(0)
 const networkDraftStatusText = ref('Borrador listo')
 const isSavingNetworkOracle = ref(false)
 const showNetworkPasteModal = ref(false)
+const showSaveNetworkConfirmModal = ref(false)
 
 // Toast system
 const toast = ref<{ show: boolean; message: string; type: 'success' | 'error' | 'info' }>({
@@ -565,15 +579,15 @@ async function handleExportNetworkExcel() {
   }
 }
 
-async function handleSaveNetworkToOracle() {
+function handleSaveNetworkToOracle() {
   if (networkRecords.value.length === 0) {
     showToast('No hay enlaces de red en la tabla para guardar.', 'info')
     return
   }
+  showSaveNetworkConfirmModal.value = true
+}
 
-  const ok = window.confirm(`¿Confirmas guardar ${networkRecords.value.length} enlaces de red en la tabla EVENTOS_REDES de Oracle para el período ${report.value.monthName} ${year.value}?`)
-  if (!ok) return
-
+async function executeSaveNetworkToOracle() {
   isSavingNetworkOracle.value = true
   try {
     const res = await fetch('/api/network-events/sync', {
@@ -589,6 +603,7 @@ async function handleSaveNetworkToOracle() {
     if (!res.ok) {
       throw new Error(data.message || 'No se pudo conectar al servidor de Oracle.')
     }
+    showSaveNetworkConfirmModal.value = false
     showToast(data.message || 'Enlaces guardados en Oracle exitosamente.', 'success')
 
     try {
@@ -693,20 +708,20 @@ onMounted(() => {
           id: 'net-demo-3',
           creadoEn: new Date().toISOString(),
           fecha: refDate,
-          enlace: 'ENLACES SD-WAN NACIONALES',
-          departamento: 'NACIONAL',
-          nombre: 'SD-WAN INFRAESTRUCTURA BMSC',
-          uptimeMensual: 99.9720,
-          uptimeAnual: 99.9910
+          enlace: 'ENLACES AGENCIAS NACIONAL',
+          departamento: 'LA PAZ',
+          nombre: 'AGENCIA CENTRAL LA PAZ',
+          uptimeMensual: 100.0000,
+          uptimeAnual: 100.0000
         },
         {
           id: 'net-demo-4',
           creadoEn: new Date().toISOString(),
           fecha: refDate,
           enlace: 'ENLACES AGENCIAS NACIONAL',
-          departamento: 'LA PAZ',
-          nombre: 'AGENCIA CENTRAL LA PAZ',
-          uptimeMensual: 100.0000,
+          departamento: 'SANTA CRUZ',
+          nombre: 'AGENCIA CRISTO REDENTOR',
+          uptimeMensual: 99.9900,
           uptimeAnual: 100.0000
         },
         {

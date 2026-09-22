@@ -12,15 +12,43 @@ export interface NetworkEventRecord {
   selected?: boolean
 }
 
-export const DEFAULT_ENLACES = [
+export type NetworkEnlaceType = 
+  | 'ENLACES WAN NACIONAL'
+  | 'ENLACES AGENCIAS NACIONAL'
+  | 'ENLACES ATMS NACIONAL'
+
+export const DEFAULT_ENLACES: NetworkEnlaceType[] = [
   'ENLACES WAN NACIONAL',
-  'ENLACES SD-WAN NACIONALES',
   'ENLACES AGENCIAS NACIONAL',
-  'ENLACES ATMS NACIONAL',
-  'ENLACES AGENCIAS',
-  'ENLACES ATMS',
-  'ENLACES DEPARTAMENTALES'
+  'ENLACES ATMS NACIONAL'
 ]
+
+/**
+ * Retorna la etiqueta correspondiente del campo "nombre" según el tipo de enlace oficial:
+ * - ENLACES WAN NACIONAL -> 'Proveedor'
+ * - ENLACES AGENCIAS NACIONAL -> 'Agencia'
+ * - ENLACES ATMS NACIONAL -> 'Nombre'
+ */
+export function getNombreFieldLabel(enlace?: string): string {
+  if (!enlace) return 'Nombre'
+  const norm = enlace.trim().toUpperCase()
+  if (norm.includes('WAN')) return 'Proveedor'
+  if (norm.includes('AGENCIA')) return 'Agencia'
+  if (norm.includes('ATM')) return 'Nombre'
+  return 'Nombre'
+}
+
+/**
+ * Retorna el placeholder descriptivo para el campo "nombre" según el enlace
+ */
+export function getNombreFieldPlaceholder(enlace?: string): string {
+  if (!enlace) return 'Nombre...'
+  const norm = enlace.trim().toUpperCase()
+  if (norm.includes('WAN')) return 'Nombre del Proveedor (ej: ENTEL, TIGO, AXS...)'
+  if (norm.includes('AGENCIA')) return 'Nombre de la Agencia (ej: AGENCIA CENTRAL, SAN PEDRO...)'
+  if (norm.includes('ATM')) return 'Nombre del Cajero ATM (ej: ATM EQUIPETROL 24H...)'
+  return 'Nombre...'
+}
 
 export const DEFAULT_DEPARTAMENTOS = [
   'LA PAZ',

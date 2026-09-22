@@ -46,7 +46,7 @@ export async function exportNetworkEventsToExcel(
     'FECHA REFERENCIA',
     'TIPO DE ENLACE',
     'DEPARTAMENTO',
-    'NOMBRE / AGENCIA / PROVEEDOR',
+    'DETALLE / NOMBRE (PROVEEDOR / AGENCIA / NOMBRE)',
     'UPTIME MENSUAL (%)',
     'UPTIME ANUAL (%)'
   ]

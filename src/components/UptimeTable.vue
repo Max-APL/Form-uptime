@@ -7,24 +7,24 @@
       <!-- Left: Primary Add Row Button + Search & Filters -->
       <div class="flex flex-wrap items-center gap-2 flex-1 min-w-[300px]">
         
-        <!-- Primary "+ Agregar Fila" button -->
+        <!-- Primary "Agregar Fila" button -->
         <button
           type="button"
           @click="$emit('add-row-inline')"
-          class="flex items-center gap-1.5 rounded-lg bg-[#004D2C] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-[#003B22] transition cursor-pointer"
+          class="flex items-center gap-1.5 rounded-lg bg-[#D39F28] px-3.5 py-1.5 text-xs font-bold text-slate-950 shadow-xs hover:bg-[#BE8D1F] transition border border-[#B3831D] cursor-pointer"
           title="Inserta una fila vacía para editar directamente en la tabla"
         >
-          <Plus class="h-3.5 w-3.5" />
-          <span>+ Agregar Fila</span>
+          <Plus class="h-3.5 w-3.5 text-slate-950" />
+          <span>Agregar Fila</span>
         </button>
 
         <button
           type="button"
           @click="$emit('open-create-modal')"
-          class="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition shadow-xs"
+          class="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-xs cursor-pointer"
           title="Abrir formulario guiado paso a paso"
         >
-          <FileText class="h-3.5 w-3.5 text-slate-500" />
+          <FileText class="h-3.5 w-3.5 text-[#004D2C]" />
           <span class="hidden sm:inline">Formulario Detallado</span>
         </button>
 
