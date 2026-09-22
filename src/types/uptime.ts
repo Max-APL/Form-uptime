@@ -14,10 +14,11 @@ export interface EventRecordV2 {
   indicador: StandardIndicator
   responsable?: string       // [NUEVO] p.ej. Infraestructura, DBA, Proveedor X
   origen?: string            // [NUEVO] p.ej. Zabbix, Dynatrace, Usuario, Mesa de Ayuda
-  declarado?: boolean        // [NUEVO] Booleano (Sí/No)
-  bitacora?: string          // [NUEVO] Código o ID de ticket/caso
+  declarado?: boolean        // Booleano (Sí/No) -> 1 o 0 en BD (campo DECLARADO)
+  revision?: boolean         // Booleano (Sí/No) -> 1 o 0 en BD (campo REVISION)
+  bitacora?: string          // Código o ID de ticket/caso
   motivo: string            // Detalle o causa
-  solucion?: string          // [NUEVO] Resolución o acción tomada
+  solucion?: string          // Resolución o acción tomada
   isEditing?: boolean
   selected?: boolean
   createdAt?: string
@@ -98,6 +99,7 @@ export interface TableFilters {
   sistema: string
   indicador: string
   declarado: 'ALL' | 'YES' | 'NO'
+  revision: 'ALL' | 'YES' | 'NO'
   responsable: string
   componente: string
 }

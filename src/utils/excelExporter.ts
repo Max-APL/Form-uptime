@@ -39,7 +39,8 @@ export async function exportEventsToExcelV2(
     'Responsable',
     'Origen',
     'Declarado',
-    'Bitácora / Ticket',
+    'Revisión',
+    'Bitácora / Registro de Hechos',
     'Motivo / Causa',
     'Solución / Acción'
   ]
@@ -72,6 +73,7 @@ export async function exportEventsToExcelV2(
       ev.responsable || '—',
       ev.origen || '—',
       ev.declarado ? 'SÍ' : 'NO',
+      ev.revision ? 'SÍ' : 'NO',
       ev.bitacora || '—',
       ev.motivo,
       ev.solucion || '—'
@@ -94,7 +96,7 @@ export async function exportEventsToExcelV2(
 
       if ([1, 2, 8, 9].includes(colNum)) {
         cell.alignment = { horizontal: 'left', vertical: 'middle' }
-      } else if ([3, 4, 5, 6, 7, 10, 11].includes(colNum)) {
+      } else if ([3, 4, 5, 6, 7, 10, 11, 12].includes(colNum)) {
         cell.alignment = { horizontal: 'center', vertical: 'middle' }
       } else {
         cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true }
@@ -104,6 +106,13 @@ export async function exportEventsToExcelV2(
         if (ev.declarado) {
           cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF047857' } }
           cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECFDF5' } }
+        } else {
+          cell.font = { name: 'Calibri', size: 10, color: { argb: 'FF64748B' } }
+        }
+      } else if (colNum === 11) {
+        if (ev.revision) {
+          cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF1D4ED8' } }
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEFF6FF' } }
         } else {
           cell.font = { name: 'Calibri', size: 10, color: { argb: 'FF64748B' } }
         }
@@ -123,7 +132,8 @@ export async function exportEventsToExcelV2(
     { width: 22 }, // Responsable
     { width: 20 }, // Origen
     { width: 13 }, // Declarado
-    { width: 18 }, // Bitácora
+    { width: 13 }, // Revisión
+    { width: 35 }, // Bitácora / Registro de Hechos
     { width: 35 }, // Motivo
     { width: 35 }  // Solución
   ]

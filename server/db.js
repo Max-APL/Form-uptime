@@ -144,6 +144,7 @@ export async function getEventsByPeriod(year, month) {
               RESPONSABLE,
               ORIGEN,
               DECLARADO,
+              REVISION,
               BITACORA,
               MOTIVO,
               SOLUCION,
@@ -181,6 +182,7 @@ export async function getEventsByPeriod(year, month) {
         responsable: row.RESPONSABLE || '',
         origen: row.ORIGEN || '',
         declarado: row.DECLARADO === 1,
+        revision: row.REVISION === 1,
         bitacora: row.BITACORA || '',
         motivo: row.MOTIVO || '',
         solucion: row.SOLUCION || '',
@@ -280,6 +282,7 @@ export async function insertEventsToOracle(events) {
         RESPONSABLE,
         ORIGEN,
         DECLARADO,
+        REVISION,
         BITACORA,
         MOTIVO,
         SOLUCION
@@ -292,6 +295,7 @@ export async function insertEventsToOracle(events) {
         :responsable,
         :origen,
         :declarado,
+        :revision,
         :bitacora,
         :motivo,
         :solucion
@@ -316,6 +320,7 @@ export async function insertEventsToOracle(events) {
         responsable: String(ev.responsable || '').trim(),
         origen: String(ev.origen || '').trim(),
         declarado: ev.declarado ? 1 : 0,
+        revision: ev.revision ? 1 : 0,
         bitacora: String(ev.bitacora || '').trim(),
         motivo: String(ev.motivo || '').trim(),
         solucion: String(ev.solucion || '').trim()
@@ -380,6 +385,7 @@ export async function syncPeriodEventsToOracle(year, month, events) {
           RESPONSABLE,
           ORIGEN,
           DECLARADO,
+          REVISION,
           BITACORA,
           MOTIVO,
           SOLUCION
@@ -392,6 +398,7 @@ export async function syncPeriodEventsToOracle(year, month, events) {
           :responsable,
           :origen,
           :declarado,
+          :revision,
           :bitacora,
           :motivo,
           :solucion
@@ -414,6 +421,7 @@ export async function syncPeriodEventsToOracle(year, month, events) {
           responsable: String(ev.responsable || '').trim(),
           origen: String(ev.origen || '').trim(),
           declarado: ev.declarado ? 1 : 0,
+          revision: ev.revision ? 1 : 0,
           bitacora: String(ev.bitacora || '').trim(),
           motivo: String(ev.motivo || '').trim(),
           solucion: String(ev.solucion || '').trim()
@@ -454,4 +462,165 @@ export async function syncPeriodEventsToOracle(year, month, events) {
 export const getEventsByPeriodV2 = getEventsByPeriod
 export const insertEventsToOracleV2 = insertEventsToOracle
 export const syncPeriodEventsToOracleV2 = syncPeriodEventsToOracle
+
+const REDES_TABLE_NAME = process.env.ORACLE_REDES_TABLE_NAME || 'EVENTOS_REDES'
+
+/**
+ * Consulta registros de la tabla EVENTOS_REDES para un período (año y mes)
+ */
+export async function getNetworkEventsByPeriod(year, month) {
+  let connection
+  try {
+    connection = await oracledb.getConnection(dbConfig)
+
+    const sql = `
+      SELECT
+        ID_EVENTO,
+        CREADO_EN,
+        FECHA,
+        ENLACE,
+        DEPARTAMENTO,
+        NOMBRE,
+        UPTIME_MENSUAL,
+        UPTIME_ANUAL
+      FROM ${REDES_TABLE_NAME}
+      WHERE EXTRACT(YEAR FROM FECHA) = :year
+        AND EXTRACT(MONTH FROM FECHA) = :month
+      ORDER BY DEPARTAMENTO ASC, NOMBRE ASC
+    `
+
+    const result = await connection.execute(sql, { year, month })
+
+    const records = (result.rows || []).map(row => {
+      let fechaStr = ''
+      if (row[2]) {
+        const d = new Date(row[2])
+        fechaStr = !isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : String(row[2])
+      }
+
+      let creadoEnStr = new Date().toISOString()
+      if (row[1]) {
+        const c = new Date(row[1])
+        creadoEnStr = !isNaN(c.getTime()) ? c.toISOString() : String(row[1])
+      }
+
+      return {
+        id: `net_${row[0]}`,
+        dbId: row[0],
+        creadoEn: creadoEnStr,
+        fecha: fechaStr,
+        enlace: row[3] || 'ENLACES WAN NACIONAL',
+        departamento: row[4] || 'NACIONAL',
+        nombre: row[5] || '',
+        uptimeMensual: Number(row[6]) || 100,
+        uptimeAnual: Number(row[7]) || 100
+      }
+    })
+
+    return {
+      year,
+      month,
+      count: records.length,
+      records
+    }
+  } catch (err) {
+    console.error('Error al consultar EVENTOS_REDES en Oracle:', err)
+    throw err
+  } finally {
+    if (connection) {
+      try {
+        await connection.close()
+      } catch (closeErr) {
+        console.error('Error cerrando conexión:', closeErr)
+      }
+    }
+  }
+}
+
+/**
+ * Sincroniza / guarda los registros de EVENTOS_REDES para un período
+ */
+export async function syncNetworkEventsToOracle(year, month, records) {
+  let connection
+  try {
+    connection = await oracledb.getConnection(dbConfig)
+
+    // 1. Delete existing records for this month/year
+    const deleteSql = `
+      DELETE FROM ${REDES_TABLE_NAME}
+      WHERE EXTRACT(YEAR FROM FECHA) = :year
+        AND EXTRACT(MONTH FROM FECHA) = :month
+    `
+    await connection.execute(deleteSql, { year, month }, { autoCommit: false })
+
+    // 2. Insert new records
+    if (Array.isArray(records) && records.length > 0) {
+      const insertSql = `
+        INSERT INTO ${REDES_TABLE_NAME} (
+          FECHA,
+          ENLACE,
+          DEPARTAMENTO,
+          NOMBRE,
+          UPTIME_MENSUAL,
+          UPTIME_ANUAL
+        ) VALUES (
+          :fecha,
+          :enlace,
+          :departamento,
+          :nombre,
+          :uptime_mensual,
+          :uptime_anual
+        )
+      `
+
+      const defaultDate = new Date(year, month - 1, 15, 12, 0, 0)
+
+      const binds = records.map(r => {
+        let f = defaultDate
+        if (r.fecha) {
+          const parts = r.fecha.split('-').map(Number)
+          if (parts.length === 3) {
+            f = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0)
+          }
+        }
+
+        return {
+          fecha: f,
+          enlace: String(r.enlace || 'ENLACES WAN NACIONAL').trim().toUpperCase(),
+          departamento: String(r.departamento || 'NACIONAL').trim().toUpperCase(),
+          nombre: String(r.nombre || '').trim(),
+          uptime_mensual: Number(r.uptimeMensual) || 100,
+          uptime_anual: Number(r.uptimeAnual) || 100
+        }
+      })
+
+      await connection.executeMany(insertSql, binds, { autoCommit: false })
+    }
+
+    // 3. Commit
+    await connection.commit()
+
+    return {
+      success: true,
+      insertedCount: records.length
+    }
+  } catch (err) {
+    if (connection) {
+      try {
+        await connection.rollback()
+      } catch (rbErr) {
+        console.error('Error en rollback de EVENTOS_REDES:', rbErr)
+      }
+    }
+    throw err
+  } finally {
+    if (connection) {
+      try {
+        await connection.close()
+      } catch (closeErr) {
+        console.error('Error cerrando conexión:', closeErr)
+      }
+    }
+  }
+}
 

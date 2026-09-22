@@ -77,6 +77,16 @@
           <option value="NO">Solo No Declarados (No)</option>
         </select>
 
+        <!-- Filter Revisión -->
+        <select
+          v-model="filters.revision"
+          class="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 focus:border-[#004D2C] focus:outline-none cursor-pointer"
+        >
+          <option value="ALL">Revisión: Todos</option>
+          <option value="YES">Solo Revisados (Sí)</option>
+          <option value="NO">Solo Pendientes (No)</option>
+        </select>
+
         <button
           v-if="hasActiveFilters"
           type="button"
@@ -520,21 +530,49 @@
                     event.declarado ? 'bg-emerald-50 text-emerald-700 border border-emerald-300' : 'bg-slate-100 text-slate-500 border border-slate-200',
                     isCompact ? 'px-2 py-0 text-[9px]' : 'px-2.5 py-0.5 text-[10px]'
                   ]"
+                  title="Clic para alternar estado de Declaración (0 o 1)"
                 >
                   <Check v-if="event.declarado" class="h-2.5 w-2.5 text-emerald-600" />
                   <span>{{ event.declarado ? 'SÍ' : 'NO' }}</span>
                 </button>
               </div>
 
-              <!-- Bitácora -->
-              <input
-                v-else-if="col.key === 'bitacora'"
-                v-model="event.bitacora"
-                @change="onRecordFieldChange(event)"
-                class="table-cell-input text-slate-700 font-mono"
-                :class="isCompact ? 'h-6 text-[10px] py-0 px-1.5' : 'h-8 text-[11px] py-1 px-2'"
-                placeholder="INC-..."
-              />
+              <!-- Revisión -->
+              <div v-else-if="col.key === 'revision'" class="text-center">
+                <button
+                  type="button"
+                  @click="toggleRevision(event)"
+                  :class="[
+                    'inline-flex items-center gap-1 rounded-full font-bold transition shadow-2xs cursor-pointer',
+                    event.revision ? 'bg-blue-50 text-blue-700 border border-blue-300' : 'bg-slate-100 text-slate-500 border border-slate-200',
+                    isCompact ? 'px-2 py-0 text-[9px]' : 'px-2.5 py-0.5 text-[10px]'
+                  ]"
+                  title="Clic para alternar estado de Revisión (0 o 1)"
+                >
+                  <Check v-if="event.revision" class="h-2.5 w-2.5 text-blue-600" />
+                  <span>{{ event.revision ? 'SÍ' : 'NO' }}</span>
+                </button>
+              </div>
+
+              <!-- Bitácora (Registro de Hechos / Correos) -->
+              <div v-else-if="col.key === 'bitacora'" class="flex items-center gap-1 group/expand">
+                <input
+                  v-model="event.bitacora"
+                  @change="onRecordFieldChange(event)"
+                  class="table-cell-input text-slate-700 truncate"
+                  :class="isCompact ? 'h-6 text-[11px] py-0 px-1.5' : 'h-8 text-xs py-1 px-2'"
+                  placeholder="Registro de hechos, correos, mensajes..."
+                  title="Registro cronológico de hechos, correos y mensajes"
+                />
+                <button
+                  type="button"
+                  @click="$emit('open-detail-modal', event)"
+                  class="opacity-0 group-hover/expand:opacity-100 text-slate-400 hover:text-[#004D2C] p-0.5 transition cursor-pointer"
+                  title="Expandir y redactar registro completo de hechos"
+                >
+                  <Maximize2 class="h-3 w-3" />
+                </button>
+              </div>
 
               <!-- Motivo -->
               <div v-else-if="col.key === 'motivo'" class="flex items-center gap-1 group/expand">
@@ -700,7 +738,8 @@ const ALL_COLUMNS: ColumnDef[] = [
   { key: 'responsable', label: 'Responsable', width: 130 },
   { key: 'origen', label: 'Origen', width: 115 },
   { key: 'declarado', label: 'Declarado', width: 95 },
-  { key: 'bitacora', label: 'Bitácora', width: 110 },
+  { key: 'revision', label: 'Revisión', width: 95 },
+  { key: 'bitacora', label: 'Bitácora / Hechos', width: 220 },
   { key: 'motivo', label: 'Motivo / Causa', width: 180 },
   { key: 'solucion', label: 'Solución', width: 170 }
 ]
@@ -824,11 +863,12 @@ const filters = reactive({
   searchQuery: '',
   sistema: '',
   indicador: '',
-  declarado: 'ALL'
+  declarado: 'ALL',
+  revision: 'ALL'
 })
 
 const hasActiveFilters = computed(() => {
-  return Boolean(filters.searchQuery || filters.sistema || filters.indicador || filters.declarado !== 'ALL')
+  return Boolean(filters.searchQuery || filters.sistema || filters.indicador || filters.declarado !== 'ALL' || filters.revision !== 'ALL')
 })
 
 function resetFilters() {
@@ -836,6 +876,7 @@ function resetFilters() {
   filters.sistema = ''
   filters.indicador = ''
   filters.declarado = 'ALL'
+  filters.revision = 'ALL'
 }
 
 type SortField = 'sistema' | 'fecha' | 'duracion'
@@ -881,6 +922,12 @@ const filteredEvents = computed(() => {
     list = list.filter(e => e.declarado === true)
   } else if (filters.declarado === 'NO') {
     list = list.filter(e => e.declarado === false)
+  }
+
+  if (filters.revision === 'YES') {
+    list = list.filter(e => e.revision === true)
+  } else if (filters.revision === 'NO') {
+    list = list.filter(e => e.revision === false)
   }
 
   // Sorting
@@ -929,6 +976,11 @@ function onTimeChange(event: EventRecordV2) {
 
 function toggleDeclarado(event: EventRecordV2) {
   event.declarado = !event.declarado
+  onRecordFieldChange(event)
+}
+
+function toggleRevision(event: EventRecordV2) {
+  event.revision = !event.revision
   onRecordFieldChange(event)
 }
 

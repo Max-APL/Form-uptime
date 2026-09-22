@@ -31,7 +31,8 @@ async function initTable() {
         { name: 'RESPONSABLE', ddl: 'ADD (RESPONSABLE VARCHAR2(150))' },
         { name: 'ORIGEN', ddl: 'ADD (ORIGEN VARCHAR2(100))' },
         { name: 'DECLARADO', ddl: 'ADD (DECLARADO NUMBER(1) DEFAULT 0)' },
-        { name: 'BITACORA', ddl: 'ADD (BITACORA VARCHAR2(200))' },
+        { name: 'REVISION', ddl: 'ADD (REVISION NUMBER(1) DEFAULT 0)' },
+        { name: 'BITACORA', ddl: 'ADD (BITACORA VARCHAR2(4000))' },
         { name: 'SOLUCION', ddl: 'ADD (SOLUCION VARCHAR2(2000))' }
       ]
 
@@ -42,7 +43,14 @@ async function initTable() {
         } catch (err) {
           // ORA-01430: column being added already exists in table
           if (err.errorNum === 1430 || err.message.includes('ORA-01430')) {
-            // Already exists, fine
+            // Already exists, try to enlarge BITACORA if needed
+            if (col.name === 'BITACORA') {
+              try {
+                await connection.execute(`ALTER TABLE ${TABLE_NAME} MODIFY (BITACORA VARCHAR2(4000))`)
+              } catch {
+                // ignore
+              }
+            }
           } else {
             console.warn(`  ⚠️ Nota columna ${col.name}:`, err.message)
           }
@@ -61,7 +69,8 @@ async function initTable() {
             RESPONSABLE  VARCHAR2(150),
             ORIGEN       VARCHAR2(100),
             DECLARADO    NUMBER(1) DEFAULT 0,
-            BITACORA     VARCHAR2(200),
+            REVISION     NUMBER(1) DEFAULT 0,
+            BITACORA     VARCHAR2(4000),
             MOTIVO       VARCHAR2(2000),
             SOLUCION     VARCHAR2(2000),
             CREADO_EN    TIMESTAMP DEFAULT CURRENT_TIMESTAMP

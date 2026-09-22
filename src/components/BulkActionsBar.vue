@@ -37,6 +37,25 @@
           <span>No Declarar</span>
         </button>
 
+        <div class="h-4 w-[1px] bg-slate-200"></div>
+
+        <button
+          type="button"
+          @click="$emit('batch-set-revision', true)"
+          class="flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 font-semibold text-blue-700 hover:bg-blue-100 transition"
+        >
+          <CheckCircle2 class="h-3.5 w-3.5" />
+          <span>Revisado</span>
+        </button>
+
+        <button
+          type="button"
+          @click="$emit('batch-set-revision', false)"
+          class="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-100 px-2.5 py-1.5 font-semibold text-slate-700 hover:bg-slate-200 transition"
+        >
+          <span>Pendiente</span>
+        </button>
+
         <!-- Change Indicator -->
         <select
           @change="onIndicatorSelect"
@@ -92,6 +111,7 @@ defineProps<{
 
 const emit = defineEmits<{
   (e: 'batch-set-declarado', val: boolean): void
+  (e: 'batch-set-revision', val: boolean): void
   (e: 'batch-set-indicador', ind: StandardIndicator): void
   (e: 'batch-delete'): void
   (e: 'clear-selection'): void

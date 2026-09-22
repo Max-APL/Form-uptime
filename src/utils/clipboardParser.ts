@@ -44,6 +44,7 @@ export function parsePastedTableText(text: string): { records: EventRecordV2[]; 
     responsable: -1,
     origen: -1,
     declarado: -1,
+    revision: -1,
     bitacora: -1,
     motivo: -1,
     solucion: -1
@@ -63,7 +64,8 @@ export function parsePastedTableText(text: string): { records: EventRecordV2[]; 
     colIdx.responsable = findIdx(['responsable', 'asignado', 'encargado'])
     colIdx.origen = findIdx(['origen', 'fuente', 'canal'])
     colIdx.declarado = findIdx(['declarado', 'oficial', 'notificado'])
-    colIdx.bitacora = findIdx(['bitacora', 'ticket', 'caso', 'id'])
+    colIdx.revision = findIdx(['revision', 'revisado', 'rev'])
+    colIdx.bitacora = findIdx(['bitacora', 'hecho', 'registro', 'correo', 'mensaje', 'minuta', 'ticket', 'caso', 'id'])
     colIdx.motivo = findIdx(['motivo', 'descripcion', 'causa'])
     colIdx.solucion = findIdx(['solucion', 'resolucion', 'accion'])
   }
@@ -89,6 +91,8 @@ export function parsePastedTableText(text: string): { records: EventRecordV2[]; 
     const origen = getVal(colIdx.origen, 8)
     const declaradoRaw = getVal(colIdx.declarado, 9).toLowerCase()
     const declarado = ['si', 'sí', 'true', '1', 'yes', 'declarado'].includes(declaradoRaw)
+    const revisionRaw = getVal(colIdx.revision, -1).toLowerCase()
+    const revision = ['si', 'sí', 'true', '1', 'yes', 'revisado', 'revision'].includes(revisionRaw)
     const bitacora = getVal(colIdx.bitacora, 10)
     const motivo = getVal(colIdx.motivo, 11)
     const solucion = getVal(colIdx.solucion, 12)
@@ -114,6 +118,7 @@ export function parsePastedTableText(text: string): { records: EventRecordV2[]; 
       responsable,
       origen,
       declarado,
+      revision,
       bitacora,
       motivo,
       solucion,

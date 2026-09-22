@@ -67,62 +67,181 @@
           <span class="md:hidden">Auto-guardado</span>
         </div>
 
-        <!-- Paste from clipboard button -->
-        <button
-          type="button"
-          @click="$emit('open-paste-modal')"
-          class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition shadow-2xs cursor-pointer"
-          title="Pegar filas copiadas de Excel (Ctrl+V)"
-        >
-          <ClipboardPaste class="h-3.5 w-3.5 text-slate-500" />
-          <span class="hidden sm:inline">Pegar Tabla</span>
-        </button>
+        <!-- ================= SISTEMAS ACTIONS ================= -->
+        <template v-if="activeTab === 'sistemas'">
+          <!-- Paste from clipboard button -->
+          <button
+            type="button"
+            @click="$emit('open-paste-modal')"
+            class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition shadow-2xs cursor-pointer"
+            title="Pegar filas de incidentes desde Excel (Ctrl+V)"
+          >
+            <ClipboardPaste class="h-3.5 w-3.5 text-slate-500" />
+            <span class="hidden sm:inline">Pegar Tabla</span>
+          </button>
 
-        <!-- View Consolidated Report -->
-        <button
-          type="button"
-          @click="$emit('open-report-modal')"
-          class="flex items-center gap-1.5 rounded-lg border border-[#004D2C]/30 bg-[#004D2C]/5 px-3 py-1.5 text-xs font-semibold text-[#004D2C] hover:bg-[#004D2C]/10 transition shadow-2xs cursor-pointer"
-          title="Ver disponibilidad y métricas consolidadas"
-        >
-          <BarChart3 class="h-3.5 w-3.5 text-[#004D2C]" />
-          <span class="hidden sm:inline">Informe Uptime</span>
-        </button>
+          <!-- View Consolidated Report -->
+          <button
+            type="button"
+            @click="$emit('open-report-modal')"
+            class="flex items-center gap-1.5 rounded-lg border border-[#004D2C]/30 bg-[#004D2C]/5 px-3 py-1.5 text-xs font-semibold text-[#004D2C] hover:bg-[#004D2C]/10 transition shadow-2xs cursor-pointer"
+            title="Ver disponibilidad y métricas consolidadas"
+          >
+            <BarChart3 class="h-3.5 w-3.5 text-[#004D2C]" />
+            <span class="hidden sm:inline">Métricas</span>
+          </button>
 
-        <!-- Export Excel -->
-        <button
-          type="button"
-          @click="$emit('export-excel')"
-          class="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100/70 transition shadow-2xs cursor-pointer"
-          title="Descargar reporte Excel (.xlsx)"
-        >
-          <FileSpreadsheet class="h-3.5 w-3.5 text-emerald-600" />
-          <span class="hidden sm:inline">Exportar Excel</span>
-        </button>
+          <!-- Official BMSC Word Report -->
+          <button
+            type="button"
+            @click="$emit('open-official-report')"
+            class="flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50/90 px-3 py-1.5 text-xs font-semibold text-blue-900 hover:bg-blue-100 transition shadow-2xs cursor-pointer"
+            title="Generar y descargar Informe Oficial BMSC en formato Word (.docx)"
+          >
+            <FileText class="h-3.5 w-3.5 text-blue-700" />
+            <span class="hidden sm:inline">Informe Word</span>
+          </button>
 
-        <!-- Save to DB -->
-        <button
-          type="button"
-          @click="$emit('save-oracle')"
-          :disabled="isSavingOracle || totalRecords === 0"
-          class="flex items-center gap-1.5 rounded-lg bg-[#004D2C] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-[#003B22] border border-[#003B22] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-          title="Guardar eventos en la Base de Datos Oracle"
-        >
-          <Database class="h-3.5 w-3.5" :class="{ 'animate-spin': isSavingOracle }" />
-          <span>{{ isSavingOracle ? 'Guardando...' : 'Guardar en la BD' }}</span>
-        </button>
+          <!-- Export Excel -->
+          <button
+            type="button"
+            @click="$emit('export-excel')"
+            class="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100/70 transition shadow-2xs cursor-pointer"
+            title="Descargar reporte Excel (.xlsx)"
+          >
+            <FileSpreadsheet class="h-3.5 w-3.5 text-emerald-600" />
+            <span class="hidden sm:inline">Exportar Excel</span>
+          </button>
 
-        <!-- Quick Add Row Button (Corporate Mustard Accent) -->
-        <button
-          type="button"
-          @click="$emit('add-row')"
-          class="flex items-center gap-1.5 rounded-lg bg-[#D39F28] px-3.5 py-1.5 text-xs font-bold text-slate-950 shadow-xs transition hover:bg-[#BE8D1F] border border-[#B3831D] cursor-pointer"
-          title="Agregar una nueva fila directamente en la tabla"
-        >
-          <Plus class="h-3.5 w-3.5 text-slate-950" />
-          <span>+ Incidente</span>
-        </button>
+          <!-- Save to DB -->
+          <button
+            type="button"
+            @click="$emit('save-oracle')"
+            :disabled="isSavingOracle || totalRecords === 0"
+            class="flex items-center gap-1.5 rounded-lg bg-[#004D2C] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-[#003B22] border border-[#003B22] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            title="Guardar incidentes en Oracle DB (EVENTOS_DOWNTIME)"
+          >
+            <Database class="h-3.5 w-3.5" :class="{ 'animate-spin': isSavingOracle }" />
+            <span>{{ isSavingOracle ? 'Guardando...' : 'Guardar BD' }}</span>
+          </button>
 
+          <!-- Quick Add Row Button (Corporate Mustard Accent) -->
+          <button
+            type="button"
+            @click="$emit('add-row')"
+            class="flex items-center gap-1.5 rounded-lg bg-[#D39F28] px-3.5 py-1.5 text-xs font-bold text-slate-950 shadow-xs transition hover:bg-[#BE8D1F] border border-[#B3831D] cursor-pointer"
+            title="Agregar una nueva caída directamente en la tabla"
+          >
+            <Plus class="h-3.5 w-3.5 text-slate-950" />
+            <span>+ Incidente</span>
+          </button>
+        </template>
+
+        <!-- ================= REDES ACTIONS ================= -->
+        <template v-else>
+          <!-- Paste from clipboard button -->
+          <button
+            type="button"
+            @click="$emit('open-network-paste-modal')"
+            class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition shadow-2xs cursor-pointer"
+            title="Pegar filas de enlaces de red desde Excel (Ctrl+V)"
+          >
+            <ClipboardPaste class="h-3.5 w-3.5 text-slate-500" />
+            <span class="hidden sm:inline">Pegar Tabla</span>
+          </button>
+
+          <!-- Export Excel -->
+          <button
+            type="button"
+            @click="$emit('export-network-excel')"
+            class="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100/70 transition shadow-2xs cursor-pointer"
+            title="Descargar reporte de enlaces en Excel (.xlsx)"
+          >
+            <FileSpreadsheet class="h-3.5 w-3.5 text-emerald-600" />
+            <span class="hidden sm:inline">Exportar Excel</span>
+          </button>
+
+          <!-- Save to DB Redes -->
+          <button
+            type="button"
+            @click="$emit('save-network-oracle')"
+            :disabled="isSavingOracle || totalNetworkRecords === 0"
+            class="flex items-center gap-1.5 rounded-lg bg-[#004D2C] px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition hover:bg-[#003B22] border border-[#003B22] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            title="Guardar enlaces en Oracle DB (EVENTOS_REDES)"
+          >
+            <Database class="h-3.5 w-3.5" :class="{ 'animate-spin': isSavingOracle }" />
+            <span>{{ isSavingOracle ? 'Guardando...' : 'Guardar BD' }}</span>
+          </button>
+
+          <!-- Quick Add Network Row -->
+          <button
+            type="button"
+            @click="$emit('add-network-row')"
+            class="flex items-center gap-1.5 rounded-lg bg-[#D39F28] px-3.5 py-1.5 text-xs font-bold text-slate-950 shadow-xs transition hover:bg-[#BE8D1F] border border-[#B3831D] cursor-pointer"
+            title="Agregar una nueva fila de enlace de red"
+          >
+            <Plus class="h-3.5 w-3.5 text-slate-950" />
+            <span>+ Enlace</span>
+          </button>
+        </template>
+
+      </div>
+    </div>
+
+    <!-- Navigation Tabs Bar -->
+    <div class="border-t border-slate-200/80 bg-slate-50/90 px-4 py-1.5 sm:px-6 lg:px-8">
+      <div class="mx-auto flex max-w-7xl items-center justify-between">
+        <div class="flex items-center gap-1.5">
+          <!-- Tab 1: Sistemas Críticos -->
+          <button
+            type="button"
+            @click="$emit('update:activeTab', 'sistemas')"
+            :class="[
+              activeTab === 'sistemas'
+                ? 'bg-white text-[#004D2C] shadow-2xs border-[#004D2C]/40 font-bold'
+                : 'text-slate-600 hover:text-slate-900 border-transparent hover:bg-slate-100 font-medium'
+            ]"
+            class="flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs transition cursor-pointer"
+          >
+            <Server class="h-3.5 w-3.5" :class="activeTab === 'sistemas' ? 'text-[#004D2C]' : 'text-slate-500'" />
+            <span>Sistemas Críticos (Core & Canales)</span>
+            <span
+              :class="activeTab === 'sistemas' ? 'bg-[#004D2C]/10 text-[#004D2C]' : 'bg-slate-200 text-slate-600'"
+              class="rounded-full px-2 py-0.2 text-[10px] font-bold"
+            >
+              {{ totalRecords }}
+            </span>
+          </button>
+
+          <!-- Tab 2: Enlaces de Red -->
+          <button
+            type="button"
+            @click="$emit('update:activeTab', 'redes')"
+            :class="[
+              activeTab === 'redes'
+                ? 'bg-white text-[#004D2C] shadow-2xs border-[#004D2C]/40 font-bold'
+                : 'text-slate-600 hover:text-slate-900 border-transparent hover:bg-slate-100 font-medium'
+            ]"
+            class="flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs transition cursor-pointer"
+          >
+            <Network class="h-3.5 w-3.5" :class="activeTab === 'redes' ? 'text-[#004D2C]' : 'text-slate-500'" />
+            <span>Enlaces de Red (Telecom, Agencias & ATMs)</span>
+            <span
+              :class="activeTab === 'redes' ? 'bg-[#004D2C]/10 text-[#004D2C]' : 'bg-slate-200 text-slate-600'"
+              class="rounded-full px-2 py-0.2 text-[10px] font-bold"
+            >
+              {{ totalNetworkRecords }}
+            </span>
+          </button>
+        </div>
+
+        <!-- Target Oracle Table Indicator -->
+        <div class="hidden md:flex items-center gap-2 text-[11px] text-slate-500 font-mono">
+          <span>Destino en Oracle:</span>
+          <span class="rounded bg-slate-200/90 px-2 py-0.5 font-bold text-slate-800">
+            {{ activeTab === 'sistemas' ? 'EVENTOS_DOWNTIME' : 'EVENTOS_REDES' }}
+          </span>
+        </div>
       </div>
     </div>
   </header>
@@ -134,27 +253,44 @@ import {
   Calendar,
   ClipboardPaste,
   BarChart3,
+  FileText,
   FileSpreadsheet,
   Database,
-  Plus
+  Plus,
+  Server,
+  Network
 } from 'lucide-vue-next'
 
-defineProps<{
-  year: number
-  month: number
-  draftStatusText: string
-  isSavingOracle: boolean
-  totalRecords: number
-}>()
+withDefaults(
+  defineProps<{
+    year: number
+    month: number
+    draftStatusText: string
+    isSavingOracle: boolean
+    totalRecords: number
+    activeTab?: 'sistemas' | 'redes'
+    totalNetworkRecords?: number
+  }>(),
+  {
+    activeTab: 'sistemas',
+    totalNetworkRecords: 0
+  }
+)
 
 defineEmits<{
   (e: 'update:year', val: number): void
   (e: 'update:month', val: number): void
+  (e: 'update:activeTab', val: 'sistemas' | 'redes'): void
   (e: 'add-row'): void
+  (e: 'add-network-row'): void
   (e: 'open-paste-modal'): void
+  (e: 'open-network-paste-modal'): void
   (e: 'open-report-modal'): void
+  (e: 'open-official-report'): void
   (e: 'export-excel'): void
+  (e: 'export-network-excel'): void
   (e: 'save-oracle'): void
+  (e: 'save-network-oracle'): void
 }>()
 
 const monthsList = [

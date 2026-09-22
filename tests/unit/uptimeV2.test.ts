@@ -91,8 +91,8 @@ describe('Form Uptime V2 - Metrics & Uptime % with New Columns', () => {
 describe('Form Uptime V2 - Clipboard TSV / CSV Parsing', () => {
   it('parses tab-delimited text with headers into V2 event records', () => {
     const tsvData = [
-      'Sistema\tComponente\tFecha\tInicio\tFin\tDuración\tIndicador\tResponsable\tOrigen\tDeclarado\tBitacora\tMotivo\tSolucion',
-      'FISA\tCore\t2026-06-15\t09:00:00\t09:20:00\t00:20:00\tII-FALLAS\tInfraestructura\tDynatrace\tSí\tTKT-999\tTimeout\tReinicio'
+      'Sistema\tComponente\tFecha\tInicio\tFin\tDuración\tIndicador\tResponsable\tOrigen\tDeclarado\tRevisión\tBitacora\tMotivo\tSolucion',
+      'FISA\tCore\t2026-06-15\t09:00:00\t09:20:00\t00:20:00\tII-FALLAS\tInfraestructura\tDynatrace\tSí\tSí\tTKT-999\tTimeout\tReinicio'
     ].join('\n')
 
     const result = parsePastedTableText(tsvData)
@@ -106,6 +106,7 @@ describe('Form Uptime V2 - Clipboard TSV / CSV Parsing', () => {
     expect(rec.horaFin).toBe('09:20:00')
     expect(rec.durationSeconds).toBe(1200)
     expect(rec.declarado).toBe(true)
+    expect(rec.revision).toBe(true)
     expect(rec.responsable).toBe('Infraestructura')
     expect(rec.origen).toBe('Dynatrace')
     expect(rec.bitacora).toBe('TKT-999')

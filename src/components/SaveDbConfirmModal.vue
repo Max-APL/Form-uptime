@@ -126,6 +126,7 @@
             <span class="text-slate-500">Desglose de estados:</span>
             <span class="font-medium text-slate-700">
               <strong class="text-emerald-700">{{ diffStats.declaredCount }} declarados</strong> | 
+              <strong class="text-blue-700">{{ diffStats.revisionCount }} revisados</strong> | 
               <strong class="text-slate-600">{{ diffStats.undeclaredCount }} no declarados</strong>
             </span>
           </div>
@@ -269,6 +270,7 @@ const diffStats = computed(() => {
         String(row.origen || '').trim() !== String(matched.origen || '').trim() ||
         String(row.bitacora || '').trim() !== String(matched.bitacora || '').trim() ||
         Boolean(row.declarado) !== Boolean(matched.declarado) ||
+        Boolean(row.revision) !== Boolean(matched.revision) ||
         String(row.fecha || '').trim() !== String(matched.fecha || '').trim() ||
         String(row.horaInicio || '').trim().slice(0, 5) !== String(matched.horaInicio || '').trim().slice(0, 5) ||
         String(row.horaFin || '').trim().slice(0, 5) !== String(matched.horaFin || '').trim().slice(0, 5)
@@ -290,6 +292,8 @@ const diffStats = computed(() => {
 
   const declaredCount = current.filter(e => e.declarado).length
   const undeclaredCount = current.length - declaredCount
+  const revisionCount = current.filter(e => e.revision).length
+  const unrevisedCount = current.length - revisionCount
 
   return {
     newCount,
@@ -298,7 +302,9 @@ const diffStats = computed(() => {
     deletedCount,
     systems,
     declaredCount,
-    undeclaredCount
+    undeclaredCount,
+    revisionCount,
+    unrevisedCount
   }
 })
 

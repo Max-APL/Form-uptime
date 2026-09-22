@@ -10,7 +10,9 @@ import {
   getEventPeriodStatus,
   getEventsByPeriod,
   insertEventsToOracle,
-  syncPeriodEventsToOracle
+  syncPeriodEventsToOracle,
+  getNetworkEventsByPeriod,
+  syncNetworkEventsToOracle
 } from './db.js'
 
 dotenv.config()
@@ -121,6 +123,60 @@ async function handlePostEvents(req, res) {
 
 app.post('/api/events', handlePostEvents)
 app.post('/api/v2/events', handlePostEvents)
+
+// ==========================================
+// Network Events (EVENTOS_REDES) Endpoints
+// ==========================================
+
+// Get network events for a given period
+app.get('/api/network-events', async (req, res) => {
+  const year = Number(req.query.year)
+  const month = Number(req.query.month)
+
+  if (!Number.isInteger(year) || year < 2000 || year > 2100 || !Number.isInteger(month) || month < 1 || month > 12) {
+    return res.status(400).json({ message: 'El mes o año no es válido.' })
+  }
+
+  try {
+    const data = await getNetworkEventsByPeriod(year, month)
+    res.json(data)
+  } catch (err) {
+    console.error('Error consultando enlaces de red en Oracle:', err)
+    res.status(500).json({
+      message: 'No se pudieron consultar los registros de EVENTOS_REDES en Oracle.',
+      error: String(err)
+    })
+  }
+})
+
+// Sync/Save network events for a given period
+app.post('/api/network-events/sync', async (req, res) => {
+  try {
+    const { records, year, month } = req.body
+
+    if (!year || !month) {
+      return res.status(400).json({
+        success: false,
+        message: 'Se requiere año y mes para sincronizar el período.'
+      })
+    }
+
+    const result = await syncNetworkEventsToOracle(Number(year), Number(month), records || [])
+
+    res.json({
+      success: true,
+      message: `Se guardaron exitosamente ${result.insertedCount} enlaces de red en la tabla EVENTOS_REDES.`,
+      insertedCount: result.insertedCount
+    })
+  } catch (err) {
+    console.error('Error guardando enlaces de red en Oracle:', err)
+    res.status(500).json({
+      success: false,
+      message: `Error al guardar en Oracle DB (EVENTOS_REDES): ${err.message || err}`,
+      error: String(err)
+    })
+  }
+})
 
 // Serve static frontend in production if dist/ folder exists
 if (fs.existsSync(distPath)) {

@@ -148,7 +148,7 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
             <div>
               <label class="block font-semibold text-slate-700 mb-1">Origen</label>
               <input
@@ -159,15 +159,29 @@
             </div>
 
             <div class="flex flex-col justify-end">
-              <label class="block font-semibold text-slate-700 mb-1">Estado de Declaración</label>
-              <label class="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 cursor-pointer hover:bg-slate-50">
+              <label class="block font-semibold text-slate-700 mb-1">Declaración (0 / 1)</label>
+              <label class="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 cursor-pointer hover:bg-slate-50 transition">
                 <input
                   type="checkbox"
                   v-model="localRecord.declarado"
                   class="h-4 w-4 rounded border-slate-300 text-[#004D2C] focus:ring-[#004D2C]"
                 />
-                <span class="font-semibold" :class="localRecord.declarado ? 'text-emerald-700' : 'text-slate-500'">
-                  {{ localRecord.declarado ? 'Declarado Oficialmente (SÍ)' : 'No declarado (NO)' }}
+                <span class="font-semibold text-xs" :class="localRecord.declarado ? 'text-emerald-700' : 'text-slate-500'">
+                  {{ localRecord.declarado ? 'Declarado (SÍ)' : 'No declarado (NO)' }}
+                </span>
+              </label>
+            </div>
+
+            <div class="flex flex-col justify-end">
+              <label class="block font-semibold text-slate-700 mb-1">Revisión (0 / 1)</label>
+              <label class="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 cursor-pointer hover:bg-slate-50 transition">
+                <input
+                  type="checkbox"
+                  v-model="localRecord.revision"
+                  class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600"
+                />
+                <span class="font-semibold text-xs" :class="localRecord.revision ? 'text-blue-700' : 'text-slate-500'">
+                  {{ localRecord.revision ? 'Revisado (SÍ)' : 'Pendiente (NO)' }}
                 </span>
               </label>
             </div>
@@ -179,12 +193,16 @@
           <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">3. Bitácora, Motivo y Solución</span>
 
           <div>
-            <label class="block font-semibold text-slate-700 mb-1">Código de Bitácora / Ticket</label>
-            <input
+            <div class="flex items-center justify-between mb-1">
+              <label class="block font-semibold text-slate-700">Bitácora / Registro de Hechos</label>
+              <span class="text-[10px] text-slate-400 font-normal">Adjuntar correos, mensajes, minutas y eventos</span>
+            </div>
+            <textarea
               v-model="localRecord.bitacora"
-              placeholder="Ej: INC-2026-0041"
-              class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-slate-900 focus:border-[#004D2C] focus:outline-none font-mono"
-            />
+              rows="4"
+              placeholder="Registro cronológico de hechos, correos recibidos/enviados, mensajes de chat y seguimiento operativo..."
+              class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-[#004D2C] focus:outline-none text-xs leading-relaxed font-sans"
+            ></textarea>
           </div>
 
           <div>
