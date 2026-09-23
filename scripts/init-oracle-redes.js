@@ -23,7 +23,31 @@ async function initNetworkTable() {
     const exists = checkRes.rows[0][0] > 0
 
     if (exists) {
-      console.log(`✅ La tabla ${TABLE_NAME} ya existe en la base de datos Oracle.`)
+      console.log(`✅ La tabla ${TABLE_NAME} ya existe en la base de datos Oracle. Verificando columnas...`)
+
+      // Ensure all required columns exist (auto-migration)
+      const columnsToAdd = [
+        { name: 'DEPARTAMENTO', ddl: 'ADD (DEPARTAMENTO VARCHAR2(100))' },
+        { name: 'ENLACE', ddl: 'ADD (ENLACE VARCHAR2(150))' },
+        { name: 'NOMBRE', ddl: 'ADD (NOMBRE VARCHAR2(200))' },
+        { name: 'UPTIME_MENSUAL', ddl: 'ADD (UPTIME_MENSUAL NUMBER(7,4) DEFAULT 100)' },
+        { name: 'UPTIME_ANUAL', ddl: 'ADD (UPTIME_ANUAL NUMBER(7,4) DEFAULT 100)' }
+      ]
+
+      for (const col of columnsToAdd) {
+        try {
+          await connection.execute(`ALTER TABLE ${TABLE_NAME} ${col.ddl}`)
+          console.log(`  ➕ Columna ${col.name} agregada exitosamente a ${TABLE_NAME}.`)
+        } catch (colErr) {
+          // ORA-01430: column being added already exists in table
+          if (colErr.errorNum === 1430 || colErr.message.includes('ORA-01430')) {
+            // Columna ya existe, ignorar
+          } else {
+            console.warn(`  ⚠️ Nota columna ${col.name}:`, colErr.message)
+          }
+        }
+      }
+      console.log(`✅ Esquema de ${TABLE_NAME} verificado y actualizado con éxito.`)
     } else {
       const createTableSql = `
         CREATE TABLE ${TABLE_NAME} (

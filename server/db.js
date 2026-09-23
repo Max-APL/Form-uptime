@@ -465,6 +465,21 @@ export const syncPeriodEventsToOracleV2 = syncPeriodEventsToOracle
 
 const REDES_TABLE_NAME = process.env.ORACLE_REDES_TABLE_NAME || 'EVENTOS_REDES'
 
+let isNetworkSchemaChecked = false
+
+async function ensureNetworkTableSchema(connection) {
+  if (isNetworkSchemaChecked) return
+  try {
+    await connection.execute(`ALTER TABLE ${REDES_TABLE_NAME} ADD (DEPARTAMENTO VARCHAR2(100))`)
+    isNetworkSchemaChecked = true
+    console.log(`✅ Columna DEPARTAMENTO verificada/agregada en ${REDES_TABLE_NAME}.`)
+  } catch (err) {
+    if (err.errorNum === 1430 || err.message?.includes('ORA-01430')) {
+      isNetworkSchemaChecked = true
+    }
+  }
+}
+
 /**
  * Consulta registros de la tabla EVENTOS_REDES para un período (año y mes)
  */
@@ -472,6 +487,7 @@ export async function getNetworkEventsByPeriod(year, month) {
   let connection
   try {
     connection = await oracledb.getConnection(dbConfig)
+    await ensureNetworkTableSchema(connection)
 
     const sql = `
       SELECT
@@ -544,6 +560,7 @@ export async function syncNetworkEventsToOracle(year, month, records) {
   let connection
   try {
     connection = await oracledb.getConnection(dbConfig)
+    await ensureNetworkTableSchema(connection)
 
     // 1. Delete existing records for this month/year
     const deleteSql = `
