@@ -263,69 +263,13 @@
               </div>
             </td>
 
-            <!-- Ciudad / Departamento (editable custom dropdown / select) -->
+            <!-- Ciudad / Departamento (searchable autocomplete combobox) -->
             <td class="px-2 py-1">
-              <div class="relative flex items-center gap-0.5 w-full group/dep">
-                <!-- Inline Custom Input Mode -->
-                <div v-if="editingCustomDeptoRowId === row.id" class="flex items-center gap-1 w-full">
-                  <input
-                    v-model="customDeptoInput"
-                    @keydown.enter.prevent="confirmCustomDepto(row)"
-                    @keydown.esc="cancelCustomDepto"
-                    placeholder="Ej: RIBERALTA"
-                    class="w-full rounded border border-[#004D2C] bg-white px-1.5 py-0.5 text-xs font-bold uppercase text-slate-900 focus:outline-none shadow-2xs"
-                    autofocus
-                  />
-                  <button
-                    type="button"
-                    @click="confirmCustomDepto(row)"
-                    class="rounded p-1 bg-[#004D2C] text-white hover:bg-[#003B22] transition shrink-0 cursor-pointer"
-                    title="Guardar ciudad / departamento"
-                  >
-                    <Check class="h-3 w-3" />
-                  </button>
-                  <button
-                    type="button"
-                    @click="cancelCustomDepto"
-                    class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition shrink-0 cursor-pointer"
-                    title="Cancelar"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <!-- Select Mode (Preloaded list + custom option) -->
-                <div v-else class="flex items-center gap-0.5 w-full">
-                  <select
-                    :value="row.departamento"
-                    @change="handleDeptoSelect(row, $event)"
-                    class="w-full rounded-md border border-slate-200 bg-white hover:border-slate-300 px-1.5 py-0.5 text-xs font-semibold text-slate-800 focus:border-[#004D2C] focus:outline-none cursor-pointer truncate shadow-2xs transition"
-                    title="Seleccionar Ciudad / Departamento"
-                  >
-                    <option
-                      v-for="dep in availableDepartamentos"
-                      :key="dep"
-                      :value="dep"
-                    >
-                      {{ dep }}
-                    </option>
-                    <option disabled>──────────</option>
-                    <option value="__CUSTOM_NEW__" class="text-[#004D2C] font-semibold">
-                      ✏️ + Personalizar nueva ciudad/depto...
-                    </option>
-                  </select>
-
-                  <!-- Direct Pencil Button on Hover to write custom city/depto -->
-                  <button
-                    type="button"
-                    @click="startCustomDepto(row)"
-                    class="opacity-0 group-hover/dep:opacity-100 p-0.5 rounded text-slate-400 hover:text-[#004D2C] hover:bg-slate-100 transition cursor-pointer shrink-0"
-                    title="Escribir ciudad o departamento personalizado"
-                  >
-                    <Edit3 class="h-3 w-3" />
-                  </button>
-                </div>
-              </div>
+              <CityCombobox
+                v-model="row.departamento"
+                :options="availableDepartamentos"
+                placeholder="Ciudad / Depto"
+              />
             </td>
 
             <!-- Nombre (editable text with dynamic placeholder and type tag) -->
@@ -467,6 +411,7 @@ import {
   Check,
   Edit3
 } from 'lucide-vue-next'
+import CityCombobox from './CityCombobox.vue'
 
 const props = defineProps<{
   records: NetworkEventRecord[]
@@ -667,39 +612,6 @@ function confirmCustomEnlace(row: NetworkEventRecord) {
 function cancelCustomEnlace() {
   editingCustomEnlaceRowId.value = null
   customEnlaceInput.value = ''
-}
-
-// Custom Ciudad / Departamento Inline Editing State & Handlers
-const editingCustomDeptoRowId = ref<string | null>(null)
-const customDeptoInput = ref('')
-
-function handleDeptoSelect(row: NetworkEventRecord, e: Event) {
-  const target = e.target as HTMLSelectElement
-  const val = target.value
-  if (val === '__CUSTOM_NEW__') {
-    startCustomDepto(row)
-  } else {
-    row.departamento = val
-  }
-}
-
-function startCustomDepto(row: NetworkEventRecord) {
-  editingCustomDeptoRowId.value = row.id
-  customDeptoInput.value = row.departamento || ''
-}
-
-function confirmCustomDepto(row: NetworkEventRecord) {
-  const clean = customDeptoInput.value.trim().toUpperCase()
-  if (clean) {
-    row.departamento = clean
-  }
-  editingCustomDeptoRowId.value = null
-  customDeptoInput.value = ''
-}
-
-function cancelCustomDepto() {
-  editingCustomDeptoRowId.value = null
-  customDeptoInput.value = ''
 }
 
 function enlaceSelectClass(val?: string): string {
