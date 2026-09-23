@@ -526,7 +526,7 @@ export async function getNetworkEventsByPeriod(year, month) {
         creadoEn: creadoEnStr,
         fecha: fechaStr,
         enlace: row[3] || 'ENLACES WAN NACIONAL',
-        departamento: row[4] || 'NACIONAL',
+        departamento: row[4] ? String(row[4]).trim() : '',
         nombre: row[5] || '',
         uptimeMensual: Number(row[6]) || 100,
         uptimeAnual: Number(row[7]) || 100
@@ -604,7 +604,7 @@ export async function syncNetworkEventsToOracle(year, month, records) {
         return {
           fecha: f,
           enlace: String(r.enlace || 'ENLACES WAN NACIONAL').trim().toUpperCase(),
-          departamento: String(r.departamento || 'NACIONAL').trim().toUpperCase(),
+          departamento: r.departamento ? String(r.departamento).trim().toUpperCase() : '',
           nombre: String(r.nombre || '').trim(),
           uptime_mensual: Number(r.uptimeMensual) || 100,
           uptime_anual: Number(r.uptimeAnual) || 100

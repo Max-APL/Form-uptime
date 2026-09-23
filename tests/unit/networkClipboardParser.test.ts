@@ -86,6 +86,6 @@ describe('networkUptime helpers and parser', () => {
     expect(DEFAULT_DEPARTAMENTOS).toContain('EL ALTO')
     expect(DEFAULT_DEPARTAMENTOS).toContain('MONTERO')
     expect(DEFAULT_DEPARTAMENTOS).toContain('BENI')
-    expect(DEFAULT_DEPARTAMENTOS).toContain('NACIONAL')
+    expect(DEFAULT_DEPARTAMENTOS).not.toContain('NACIONAL')
   })
 })

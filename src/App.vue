@@ -545,7 +545,7 @@ function addNewNetworkRow() {
     creadoEn: new Date().toISOString(),
     fecha: defaultPeriodDate.value,
     enlace: DEFAULT_ENLACES[0],
-    departamento: 'NACIONAL',
+    departamento: '',
     nombre: '',
     uptimeMensual: 100,
     uptimeAnual: 100,
@@ -689,7 +689,7 @@ onMounted(() => {
           creadoEn: new Date().toISOString(),
           fecha: refDate,
           enlace: 'ENLACES WAN NACIONAL',
-          departamento: 'NACIONAL',
+          departamento: 'LA PAZ',
           nombre: 'ENTEL (Enlace Principal WAN)',
           uptimeMensual: 99.9850,
           uptimeAnual: 99.9990
@@ -699,7 +699,7 @@ onMounted(() => {
           creadoEn: new Date().toISOString(),
           fecha: refDate,
           enlace: 'ENLACES WAN NACIONAL',
-          departamento: 'NACIONAL',
+          departamento: 'SANTA CRUZ',
           nombre: 'TIGO (Enlace de Respaldo WAN)',
           uptimeMensual: 100.0000,
           uptimeAnual: 99.9950

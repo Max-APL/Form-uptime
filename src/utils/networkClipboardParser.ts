@@ -10,7 +10,7 @@ export function parsePastedNetworkText(
   text: string,
   defaultEnlace: string = 'ENLACES WAN NACIONAL',
   referenceDate?: string,
-  defaultDepartamento: string = 'NACIONAL'
+  defaultDepartamento: string = ''
 ): { records: NetworkEventRecord[]; warning?: string } {
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
   if (lines.length === 0) {
@@ -64,7 +64,7 @@ export function parsePastedNetworkText(
     // If row has >= 4 columns: [Depto, Nombre, Mensual, Anual] or [Nro, Depto, Nombre, Mensual]
     let fecha = todayStr
     let enlace = defaultEnlace
-    let departamento = defaultDepartamento || 'NACIONAL'
+    let departamento = defaultDepartamento || ''
     let nombre = ''
     let uptimeMensual = 100
     let uptimeAnual = 100
@@ -90,7 +90,7 @@ export function parsePastedNetworkText(
 
       const effectiveCols = row.slice(startOffset)
       if (effectiveCols.length >= 3) {
-        departamento = effectiveCols[0]?.toUpperCase() || defaultDepartamento || 'NACIONAL'
+        departamento = effectiveCols[0]?.toUpperCase() || defaultDepartamento || ''
         nombre = effectiveCols[1] || ''
         uptimeMensual = parseUptimePercentage(effectiveCols[2])
         uptimeAnual = effectiveCols[3] ? parseUptimePercentage(effectiveCols[3]) : uptimeMensual

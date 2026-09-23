@@ -51,7 +51,6 @@ export function getNombreFieldPlaceholder(enlace?: string): string {
 }
 
 export const DEFAULT_DEPARTAMENTOS = [
-  'NACIONAL',
   // Departamentos
   'BENI',
   'CHUQUISACA',

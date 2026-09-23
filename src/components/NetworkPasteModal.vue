@@ -69,6 +69,7 @@
             @change="handleTextChange"
             class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:border-[#004D2C] focus:outline-none cursor-pointer"
           >
+            <option value="">(Detectar de Excel / Vacío)</option>
             <option v-for="dep in DEFAULT_DEPARTAMENTOS" :key="dep" :value="dep">
               {{ dep }}
             </option>
@@ -185,7 +186,7 @@ const emit = defineEmits<{
 const pasteText = ref('')
 const importMode = ref<'append' | 'replace'>('append')
 const selectedEnlace = ref<string>(DEFAULT_ENLACES[0])
-const selectedDepto = ref<string>('NACIONAL')
+const selectedDepto = ref<string>('')
 const referenceDate = ref(props.defaultReferenceDate || new Date().toISOString().slice(0, 10))
 
 const parsedRecords = ref<NetworkEventRecord[]>([])

@@ -263,12 +263,15 @@
               </div>
             </td>
 
-            <!-- Ciudad / Departamento (searchable autocomplete combobox) -->
+            <!-- Ciudad / Departamento (combobox donde se puede escribir y muestra coincidencias) -->
             <td class="px-2 py-1">
-              <CityCombobox
-                v-model="row.departamento"
-                :options="availableDepartamentos"
+              <input
+                :value="row.departamento"
+                @input="row.departamento = ($event.target as HTMLInputElement).value.toUpperCase()"
+                @focus="($event.target as HTMLInputElement).select()"
+                list="ciudades-departamentos-list"
                 placeholder="Ciudad / Depto"
+                class="w-full rounded border border-slate-200 hover:border-slate-300 focus:border-[#004D2C] bg-white px-2 py-1 text-xs uppercase font-medium text-slate-800 focus:outline-none shadow-2xs"
               />
             </td>
 
@@ -351,6 +354,10 @@
       </table>
     </div>
 
+    <!-- Datalist para autocompletado y búsqueda de Ciudad / Departamento -->
+    <datalist id="ciudades-departamentos-list">
+      <option v-for="c in availableDepartamentos" :key="c" :value="c">{{ c }}</option>
+    </datalist>
 
     <!-- Bottom Metrics Summary Bar (integrated in unified card) -->
     <div class="flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 bg-slate-50/70 p-3.5">
@@ -411,7 +418,6 @@ import {
   Check,
   Edit3
 } from 'lucide-vue-next'
-import CityCombobox from './CityCombobox.vue'
 
 const props = defineProps<{
   records: NetworkEventRecord[]
@@ -455,11 +461,7 @@ const availableDepartamentos = computed(() => {
     }
   })
   const list = Array.from(set)
-  return list.sort((a, b) => {
-    if (a === 'NACIONAL') return -1
-    if (b === 'NACIONAL') return 1
-    return a.localeCompare(b, 'es')
-  })
+  return list.sort((a, b) => a.localeCompare(b, 'es'))
 })
 
 // Auto-sanitize existing records' enlace and departamento so any untrimmed strings are cleaned up
@@ -549,7 +551,7 @@ function addNewRow() {
     creadoEn: new Date().toISOString(),
     fecha: props.referenceDate || new Date().toISOString().slice(0, 10),
     enlace: filterEnlace.value !== 'ALL' ? filterEnlace.value : DEFAULT_ENLACES[0],
-    departamento: filterDepto.value !== 'ALL' ? filterDepto.value : 'NACIONAL',
+    departamento: filterDepto.value !== 'ALL' ? filterDepto.value : '',
     nombre: '',
     uptimeMensual: 100,
     uptimeAnual: 100,
