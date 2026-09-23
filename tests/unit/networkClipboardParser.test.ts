@@ -3,6 +3,7 @@ import {
   parseUptimePercentage,
   formatUptimePercent,
   DEFAULT_ENLACES,
+  DEFAULT_DEPARTAMENTOS,
   getNombreFieldLabel,
   getNombreFieldPlaceholder
 } from '../../src/types/networkUptime'
@@ -66,5 +67,25 @@ describe('networkUptime helpers and parser', () => {
     expect(records[0].departamento).toBe('TARIJA')
     expect(records[2].nombre).toBe('Ag. YACUIBA')
     expect(records[2].uptimeMensual).toBe(99.98)
+  })
+
+  it('recognizes CIUDAD / DEPARTAMENTO header with cities like RIBERALTA', () => {
+    const tsv = `CIUDAD / DEPARTAMENTO\tAGENCIA\tUPTIME MENSUAL %\tUPTIME ANUAL %\nRIBERALTA\tAgencia Riberalta Central\t99.95%\t99.99%\nMONTERO\tAgencia Montero\t100%\t100%`
+    const { records } = parsePastedNetworkText(tsv, 'ENLACES AGENCIAS NACIONAL')
+    expect(records.length).toBe(2)
+    expect(records[0].departamento).toBe('RIBERALTA')
+    expect(records[0].nombre).toBe('Agencia Riberalta Central')
+    expect(records[0].uptimeMensual).toBe(99.95)
+    expect(records[1].departamento).toBe('MONTERO')
+    expect(records[1].nombre).toBe('Agencia Montero')
+  })
+
+  it('includes key cities and departments in DEFAULT_DEPARTAMENTOS', () => {
+    expect(DEFAULT_DEPARTAMENTOS).toContain('RIBERALTA')
+    expect(DEFAULT_DEPARTAMENTOS).toContain('RIVERALTA')
+    expect(DEFAULT_DEPARTAMENTOS).toContain('EL ALTO')
+    expect(DEFAULT_DEPARTAMENTOS).toContain('MONTERO')
+    expect(DEFAULT_DEPARTAMENTOS).toContain('BENI')
+    expect(DEFAULT_DEPARTAMENTOS).toContain('NACIONAL')
   })
 })

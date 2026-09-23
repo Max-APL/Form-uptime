@@ -51,17 +51,41 @@ export function getNombreFieldPlaceholder(enlace?: string): string {
 }
 
 export const DEFAULT_DEPARTAMENTOS = [
-  'LA PAZ',
-  'SANTA CRUZ',
+  'NACIONAL',
+  // Departamentos
+  'BENI',
+  'CHUQUISACA',
   'COCHABAMBA',
+  'LA PAZ',
   'ORURO',
+  'PANDO',
   'POTOSI',
+  'SANTA CRUZ',
   'SUCRE',
   'TARIJA',
-  'BENI',
-  'PANDO',
-  'NACIONAL'
+  // Ciudades y localidades
+  'BERMEJO',
+  'CAMIRI',
+  'COBIJA',
+  'EL ALTO',
+  'GUAYARAMERIN',
+  'LLALLAGUA',
+  'MONTERO',
+  'QUILLACOLLO',
+  'RIBERALTA',
+  'RIVERALTA',
+  'ROBORE',
+  'SACABA',
+  'SAN IGNACIO DE VELASCO',
+  'TRINIDAD',
+  'TUPIZA',
+  'VIACHA',
+  'VILLAZON',
+  'WARNES',
+  'YACUIBA'
 ]
+
+export const DEFAULT_CIUDADES_DEPARTAMENTOS = DEFAULT_DEPARTAMENTOS
 
 /**
  * Limpia y normaliza un porcentaje ingresado por el usuario (acepta '99.97%', '99,80', 100, etc.)

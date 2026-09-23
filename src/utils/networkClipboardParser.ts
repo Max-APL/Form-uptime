@@ -9,7 +9,8 @@ function cleanCell(val: string | undefined): string {
 export function parsePastedNetworkText(
   text: string,
   defaultEnlace: string = 'ENLACES WAN NACIONAL',
-  referenceDate?: string
+  referenceDate?: string,
+  defaultDepartamento: string = 'NACIONAL'
 ): { records: NetworkEventRecord[]; warning?: string } {
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
   if (lines.length === 0) {
@@ -26,7 +27,7 @@ export function parsePastedNetworkText(
     return { records: [] }
   }
 
-  const headerCandidates = ['departamento', 'ciudad', 'nombre', 'agencia', 'proveedor', 'enlace', 'mensual', 'anual', 'uptime']
+  const headerCandidates = ['departamento', 'ciudad', 'nombre', 'agencia', 'proveedor', 'enlace', 'mensual', 'anual', 'uptime', 'localidad', 'municipio']
   const firstRowLower = rows[0].map(c => c.toLowerCase().replace(/[^a-z0-9]/g, ''))
   const hasHeader = firstRowLower.some(h => headerCandidates.some(c => h.includes(c)))
 
@@ -49,7 +50,7 @@ export function parsePastedNetworkText(
 
     colIdx.fecha = findIdx(['fecha', 'date', 'dia'])
     colIdx.enlace = findIdx(['enlace', 'tipo', 'servicio'])
-    colIdx.departamento = findIdx(['departamento', 'ciudad', 'depto', 'region'])
+    colIdx.departamento = findIdx(['departamento', 'ciudad', 'depto', 'region', 'localidad', 'municipio'])
     colIdx.nombre = findIdx(['nombre', 'agencia', 'proveedor', 'atm', 'cajero'])
     colIdx.uptimeMensual = findIdx(['mensual', 'mes', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre', 'uptime'])
     colIdx.uptimeAnual = findIdx(['anual', 'meta', 'anualtotal', 'year'])
@@ -63,7 +64,7 @@ export function parsePastedNetworkText(
     // If row has >= 4 columns: [Depto, Nombre, Mensual, Anual] or [Nro, Depto, Nombre, Mensual]
     let fecha = todayStr
     let enlace = defaultEnlace
-    let departamento = 'NACIONAL'
+    let departamento = defaultDepartamento || 'NACIONAL'
     let nombre = ''
     let uptimeMensual = 100
     let uptimeAnual = 100
@@ -89,7 +90,7 @@ export function parsePastedNetworkText(
 
       const effectiveCols = row.slice(startOffset)
       if (effectiveCols.length >= 3) {
-        departamento = effectiveCols[0]?.toUpperCase() || 'NACIONAL'
+        departamento = effectiveCols[0]?.toUpperCase() || defaultDepartamento || 'NACIONAL'
         nombre = effectiveCols[1] || ''
         uptimeMensual = parseUptimePercentage(effectiveCols[2])
         uptimeAnual = effectiveCols[3] ? parseUptimePercentage(effectiveCols[3]) : uptimeMensual

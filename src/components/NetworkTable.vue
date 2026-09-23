@@ -48,13 +48,13 @@
           <option v-for="enl in availableEnlaces" :key="enl" :value="enl">{{ enl }}</option>
         </select>
 
-        <!-- Filter by Departamento -->
+        <!-- Filter by Ciudad / Departamento -->
         <select
           v-model="filterDepto"
           class="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 focus:border-[#004D2C] focus:outline-none cursor-pointer"
         >
-          <option value="ALL">Todos los Deptos</option>
-          <option v-for="dep in DEFAULT_DEPARTAMENTOS" :key="dep" :value="dep">{{ dep }}</option>
+          <option value="ALL">Todas las Ciudades / Deptos</option>
+          <option v-for="dep in availableDepartamentos" :key="dep" :value="dep">{{ dep }}</option>
         </select>
 
         <!-- Reset filters button -->
@@ -134,8 +134,8 @@
             <!-- Enlace Column -->
             <th class="w-56 min-w-[210px] px-3 py-2.5 font-bold text-slate-800">Tipo de Enlace</th>
 
-            <!-- Departamento Column -->
-            <th class="w-32 px-3 py-2.5 font-bold text-slate-800">Departamento</th>
+            <!-- Ciudad / Departamento Column -->
+            <th class="w-44 min-w-[150px] px-3 py-2.5 font-bold text-slate-800">Ciudad / Departamento</th>
 
             <!-- Dynamic Nombre / Proveedor / Agencia / ATM Column -->
             <th class="min-w-[220px] px-3 py-2.5 font-bold text-slate-800">
@@ -263,14 +263,69 @@
               </div>
             </td>
 
-            <!-- Departamento (editable select / input) -->
+            <!-- Ciudad / Departamento (editable custom dropdown / select) -->
             <td class="px-2 py-1">
-              <input
-                v-model="row.departamento"
-                list="depto-list"
-                placeholder="Departamento"
-                class="w-full rounded border border-transparent hover:border-slate-300 focus:border-[#004D2C] bg-transparent px-1.5 py-0.5 text-xs uppercase font-medium text-slate-800 focus:bg-white focus:outline-none"
-              />
+              <div class="relative flex items-center gap-0.5 w-full group/dep">
+                <!-- Inline Custom Input Mode -->
+                <div v-if="editingCustomDeptoRowId === row.id" class="flex items-center gap-1 w-full">
+                  <input
+                    v-model="customDeptoInput"
+                    @keydown.enter.prevent="confirmCustomDepto(row)"
+                    @keydown.esc="cancelCustomDepto"
+                    placeholder="Ej: RIBERALTA"
+                    class="w-full rounded border border-[#004D2C] bg-white px-1.5 py-0.5 text-xs font-bold uppercase text-slate-900 focus:outline-none shadow-2xs"
+                    autofocus
+                  />
+                  <button
+                    type="button"
+                    @click="confirmCustomDepto(row)"
+                    class="rounded p-1 bg-[#004D2C] text-white hover:bg-[#003B22] transition shrink-0 cursor-pointer"
+                    title="Guardar ciudad / departamento"
+                  >
+                    <Check class="h-3 w-3" />
+                  </button>
+                  <button
+                    type="button"
+                    @click="cancelCustomDepto"
+                    class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition shrink-0 cursor-pointer"
+                    title="Cancelar"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <!-- Select Mode (Preloaded list + custom option) -->
+                <div v-else class="flex items-center gap-0.5 w-full">
+                  <select
+                    :value="row.departamento"
+                    @change="handleDeptoSelect(row, $event)"
+                    class="w-full rounded-md border border-slate-200 bg-white hover:border-slate-300 px-1.5 py-0.5 text-xs font-semibold text-slate-800 focus:border-[#004D2C] focus:outline-none cursor-pointer truncate shadow-2xs transition"
+                    title="Seleccionar Ciudad / Departamento"
+                  >
+                    <option
+                      v-for="dep in availableDepartamentos"
+                      :key="dep"
+                      :value="dep"
+                    >
+                      {{ dep }}
+                    </option>
+                    <option disabled>──────────</option>
+                    <option value="__CUSTOM_NEW__" class="text-[#004D2C] font-semibold">
+                      ✏️ + Personalizar nueva ciudad/depto...
+                    </option>
+                  </select>
+
+                  <!-- Direct Pencil Button on Hover to write custom city/depto -->
+                  <button
+                    type="button"
+                    @click="startCustomDepto(row)"
+                    class="opacity-0 group-hover/dep:opacity-100 p-0.5 rounded text-slate-400 hover:text-[#004D2C] hover:bg-slate-100 transition cursor-pointer shrink-0"
+                    title="Escribir ciudad o departamento personalizado"
+                  >
+                    <Edit3 class="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
             </td>
 
             <!-- Nombre (editable text with dynamic placeholder and type tag) -->
@@ -352,10 +407,6 @@
       </table>
     </div>
 
-    <!-- Datalist for Departamento Autocomplete -->
-    <datalist id="depto-list">
-      <option v-for="dep in DEFAULT_DEPARTAMENTOS" :key="dep" :value="dep" />
-    </datalist>
 
     <!-- Bottom Metrics Summary Bar (integrated in unified card) -->
     <div class="flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 bg-slate-50/70 p-3.5">
@@ -446,7 +497,27 @@ const availableEnlaces = computed(() => {
   return Array.from(set)
 })
 
-// Auto-sanitize existing records' enlace so any untrimmed strings from localStorage/DB are cleaned up
+const availableDepartamentos = computed(() => {
+  const set = new Set<string>()
+  DEFAULT_DEPARTAMENTOS.forEach(d => {
+    const clean = d.replace(/\s+/g, ' ').trim().toUpperCase()
+    if (clean) set.add(clean)
+  })
+  props.records.forEach(r => {
+    if (r.departamento) {
+      const clean = r.departamento.replace(/\s+/g, ' ').trim().toUpperCase()
+      if (clean) set.add(clean)
+    }
+  })
+  const list = Array.from(set)
+  return list.sort((a, b) => {
+    if (a === 'NACIONAL') return -1
+    if (b === 'NACIONAL') return 1
+    return a.localeCompare(b, 'es')
+  })
+})
+
+// Auto-sanitize existing records' enlace and departamento so any untrimmed strings are cleaned up
 watch(
   () => props.records,
   (recs) => {
@@ -456,6 +527,12 @@ watch(
         const clean = r.enlace.replace(/\s+/g, ' ').trim().toUpperCase()
         if (clean !== r.enlace) {
           r.enlace = clean
+        }
+      }
+      if (r.departamento) {
+        const clean = r.departamento.replace(/\s+/g, ' ').trim().toUpperCase()
+        if (clean !== r.departamento) {
+          r.departamento = clean
         }
       }
     })
@@ -590,6 +667,39 @@ function confirmCustomEnlace(row: NetworkEventRecord) {
 function cancelCustomEnlace() {
   editingCustomEnlaceRowId.value = null
   customEnlaceInput.value = ''
+}
+
+// Custom Ciudad / Departamento Inline Editing State & Handlers
+const editingCustomDeptoRowId = ref<string | null>(null)
+const customDeptoInput = ref('')
+
+function handleDeptoSelect(row: NetworkEventRecord, e: Event) {
+  const target = e.target as HTMLSelectElement
+  const val = target.value
+  if (val === '__CUSTOM_NEW__') {
+    startCustomDepto(row)
+  } else {
+    row.departamento = val
+  }
+}
+
+function startCustomDepto(row: NetworkEventRecord) {
+  editingCustomDeptoRowId.value = row.id
+  customDeptoInput.value = row.departamento || ''
+}
+
+function confirmCustomDepto(row: NetworkEventRecord) {
+  const clean = customDeptoInput.value.trim().toUpperCase()
+  if (clean) {
+    row.departamento = clean
+  }
+  editingCustomDeptoRowId.value = null
+  customDeptoInput.value = ''
+}
+
+function cancelCustomDepto() {
+  editingCustomDeptoRowId.value = null
+  customDeptoInput.value = ''
 }
 
 function enlaceSelectClass(val?: string): string {

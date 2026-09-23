@@ -22,8 +22,8 @@
         </button>
       </div>
 
-      <!-- Controls: Default Enlace Type -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+      <!-- Controls: Default Enlace Type, Ciudad/Depto, and Reference Date -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
         <div>
           <label class="block font-semibold text-slate-700 mb-1">Tipo de Enlace por defecto:</label>
           <!-- Custom Enlace Input Mode in Modal -->
@@ -61,6 +61,20 @@
             </option>
           </select>
         </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Ciudad / Depto por defecto:</label>
+          <select
+            v-model="selectedDepto"
+            @change="handleTextChange"
+            class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:border-[#004D2C] focus:outline-none cursor-pointer"
+          >
+            <option v-for="dep in DEFAULT_DEPARTAMENTOS" :key="dep" :value="dep">
+              {{ dep }}
+            </option>
+          </select>
+        </div>
+
         <div>
           <label class="block font-semibold text-slate-700 mb-1">Fecha de Referencia:</label>
           <input
@@ -75,7 +89,7 @@
       <!-- Instructions & Textarea -->
       <div class="space-y-3 text-xs">
         <p class="text-slate-600">
-          El sistema detecta automáticamente columnas copiadas de Excel (e.g. <em>Departamento, Proveedor / Agencia / Nombre, Uptime Mensual %, Uptime Anual %</em>).
+          El sistema detecta automáticamente columnas copiadas de Excel (e.g. <em>Ciudad / Departamento, Proveedor / Agencia / Nombre, Uptime Mensual %, Uptime Anual %</em>).
         </p>
 
         <div class="relative">
@@ -154,7 +168,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { NetworkEventRecord } from '../types/networkUptime'
-import { DEFAULT_ENLACES, formatUptimePercent } from '../types/networkUptime'
+import { DEFAULT_ENLACES, DEFAULT_DEPARTAMENTOS, formatUptimePercent } from '../types/networkUptime'
 import { parsePastedNetworkText } from '../utils/networkClipboardParser'
 import { ClipboardPaste, CheckCircle2, Plus } from 'lucide-vue-next'
 
@@ -171,6 +185,7 @@ const emit = defineEmits<{
 const pasteText = ref('')
 const importMode = ref<'append' | 'replace'>('append')
 const selectedEnlace = ref<string>(DEFAULT_ENLACES[0])
+const selectedDepto = ref<string>('NACIONAL')
 const referenceDate = ref(props.defaultReferenceDate || new Date().toISOString().slice(0, 10))
 
 const parsedRecords = ref<NetworkEventRecord[]>([])
@@ -205,7 +220,12 @@ function handleTextChange() {
     parsedRecords.value = []
     return
   }
-  const { records } = parsePastedNetworkText(pasteText.value, selectedEnlace.value, referenceDate.value)
+  const { records } = parsePastedNetworkText(
+    pasteText.value,
+    selectedEnlace.value,
+    referenceDate.value,
+    selectedDepto.value
+  )
   parsedRecords.value = records
 }
 
