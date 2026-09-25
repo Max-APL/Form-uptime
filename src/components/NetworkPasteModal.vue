@@ -116,69 +116,7 @@
           </p>
         </div>
 
-        <!-- 2. Controls: Default Enlace Type, Ciudad/Depto, and Reference Date -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs bg-slate-50/70 p-3.5 rounded-xl border border-slate-200">
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">Tipo de Enlace por defecto:</label>
-            <div v-if="isCustomEnlaceInModal" class="flex items-center gap-1">
-              <input
-                v-model="customEnlaceModalInput"
-                @input="handleCustomModalInputChange"
-                placeholder="Ej: ENLACES SATELITALES"
-                class="w-full rounded-lg border border-[#004D2C] bg-white px-2.5 py-1.5 text-xs font-bold uppercase text-slate-900 focus:outline-none shadow-2xs"
-                autofocus
-              />
-              <button
-                type="button"
-                @click="cancelCustomModalEnlace"
-                class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer"
-                title="Volver al selector"
-              >
-                ✕
-              </button>
-            </div>
-            <select
-              v-else
-              :value="selectedEnlace"
-              @change="handleModalEnlaceSelect"
-              class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:border-[#004D2C] focus:outline-none cursor-pointer shadow-2xs"
-            >
-              <option v-for="enl in DEFAULT_ENLACES" :key="enl" :value="enl">
-                {{ enl }}
-              </option>
-              <option disabled>──────────</option>
-              <option value="__CUSTOM_NEW__" class="text-[#004D2C] font-semibold">
-                ✏️ + Personalizar nuevo enlace...
-              </option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">Ciudad / Depto si falta:</label>
-            <select
-              v-model="selectedDepto"
-              @change="handleDeptoChange"
-              class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:border-[#004D2C] focus:outline-none cursor-pointer shadow-2xs"
-            >
-              <option value="">(Detectar de Excel / Vacío)</option>
-              <option v-for="dep in DEFAULT_DEPARTAMENTOS" :key="dep" :value="dep">
-                {{ dep }}
-              </option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">Fecha de Referencia:</label>
-            <input
-              v-model="referenceDate"
-              type="date"
-              @change="handleDateChange"
-              class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:border-[#004D2C] focus:outline-none shadow-2xs"
-            />
-          </div>
-        </div>
-
-        <!-- 3. Tabs: Subir Archivo vs Pegar Texto -->
+        <!-- 2. Tabs: Subir Archivo vs Pegar Texto -->
         <div>
           <div class="flex items-center gap-2 border-b border-slate-200 pb-2">
             <button
@@ -275,7 +213,54 @@
         </div>
 
         <!-- 4B. Modo Portapapeles: Textarea -->
-        <div v-else class="space-y-2">
+        <div v-else class="space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50/70 p-3 rounded-xl border border-slate-200">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Tipo de Enlace por defecto:</label>
+              <div v-if="isCustomEnlaceInModal" class="flex items-center gap-1">
+                <input
+                  v-model="customEnlaceModalInput"
+                  @input="handleCustomModalInputChange"
+                  placeholder="Ej: ENLACES SATELITALES"
+                  class="w-full rounded-lg border border-[#004D2C] bg-white px-2.5 py-1.5 text-xs font-bold uppercase text-slate-900 focus:outline-none shadow-2xs"
+                  autofocus
+                />
+                <button
+                  type="button"
+                  @click="cancelCustomModalEnlace"
+                  class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition cursor-pointer"
+                  title="Volver al selector"
+                >
+                  ✕
+                </button>
+              </div>
+              <select
+                v-else
+                :value="selectedEnlace"
+                @change="handleModalEnlaceSelect"
+                class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:border-[#004D2C] focus:outline-none cursor-pointer shadow-2xs"
+              >
+                <option v-for="enl in DEFAULT_ENLACES" :key="enl" :value="enl">
+                  {{ enl }}
+                </option>
+                <option disabled>──────────</option>
+                <option value="__CUSTOM_NEW__" class="text-[#004D2C] font-semibold">
+                  ✏️ + Personalizar nuevo enlace...
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1">Fecha de Referencia:</label>
+              <input
+                v-model="referenceDate"
+                type="date"
+                @change="handleDateChange"
+                class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 focus:border-[#004D2C] focus:outline-none shadow-2xs"
+              />
+            </div>
+          </div>
+
           <p class="text-xs text-slate-600">
             Copia filas de tu Excel con las columnas (ej: <em>Ciudad/Depto, Nombre, Uptime Mes %, Uptime Anual %</em>) y pégalas aquí:
           </p>
@@ -415,7 +400,7 @@ import {
   Loader2
 } from 'lucide-vue-next'
 import type { NetworkEventRecord } from '../types/networkUptime'
-import { DEFAULT_ENLACES, DEFAULT_DEPARTAMENTOS, formatUptimePercent } from '../types/networkUptime'
+import { DEFAULT_ENLACES, formatUptimePercent } from '../types/networkUptime'
 import { parseNetworkExcelBuffer } from '../utils/networkExcelParser'
 import { parsePastedNetworkText } from '../utils/networkClipboardParser'
 import { downloadNetworkTemplate } from '../utils/templateDownloader'
@@ -439,7 +424,6 @@ const uploadedFile = ref<File | null>(null)
 const pasteText = ref('')
 const importMode = ref<'append' | 'replace'>('append')
 const selectedEnlace = ref<string>(DEFAULT_ENLACES[0])
-const selectedDepto = ref<string>('')
 const referenceDate = ref(props.defaultReferenceDate || new Date().toISOString().slice(0, 10))
 
 const parsedRecords = ref<NetworkEventRecord[]>([])
@@ -479,7 +463,7 @@ async function processFile(file: File) {
     const result = await parseNetworkExcelBuffer(
       buffer,
       selectedEnlace.value,
-      selectedDepto.value,
+      '',
       referenceDate.value
     )
     parsedRecords.value = result.records
@@ -524,9 +508,6 @@ function cancelCustomModalEnlace() {
   reprocessIfPresent()
 }
 
-function handleDeptoChange() {
-  reprocessIfPresent()
-}
 
 function handleDateChange() {
   reprocessIfPresent()
@@ -550,7 +531,7 @@ function handlePasteTextChange() {
     pasteText.value,
     selectedEnlace.value,
     referenceDate.value,
-    selectedDepto.value
+    ''
   )
   parsedRecords.value = records
   parseWarnings.value = warning ? [warning] : []
