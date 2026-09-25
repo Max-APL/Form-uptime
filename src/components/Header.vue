@@ -69,15 +69,15 @@
 
         <!-- ================= SISTEMAS ACTIONS ================= -->
         <template v-if="activeTab === 'sistemas'">
-          <!-- Paste from clipboard button -->
+          <!-- Import from Excel button -->
           <button
             type="button"
             @click="$emit('open-paste-modal')"
-            class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition shadow-2xs cursor-pointer"
-            title="Pegar filas de incidentes desde Excel (Ctrl+V)"
+            class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs cursor-pointer"
+            title="Importar incidentes desde archivo Excel (.xlsx) o portapapeles"
           >
-            <ClipboardPaste class="h-3.5 w-3.5 text-slate-500" />
-            <span class="hidden sm:inline">Pegar Tabla</span>
+            <Upload class="h-3.5 w-3.5 text-[#004D2C]" />
+            <span class="hidden sm:inline">Importar</span>
           </button>
 
           <!-- View Consolidated Report -->
@@ -128,15 +128,15 @@
 
         <!-- ================= REDES ACTIONS ================= -->
         <template v-else>
-          <!-- Paste from clipboard button -->
+          <!-- Import from Excel button Redes -->
           <button
             type="button"
             @click="$emit('open-network-paste-modal')"
-            class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition shadow-2xs cursor-pointer"
-            title="Pegar filas de enlaces de red desde Excel (Ctrl+V)"
+            class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition shadow-2xs cursor-pointer"
+            title="Importar enlaces de red desde archivo Excel (.xlsx) o portapapeles"
           >
-            <ClipboardPaste class="h-3.5 w-3.5 text-slate-500" />
-            <span class="hidden sm:inline">Pegar Tabla</span>
+            <Upload class="h-3.5 w-3.5 text-[#004D2C]" />
+            <span class="hidden sm:inline">Importar</span>
           </button>
 
           <!-- Export Excel -->
@@ -229,7 +229,7 @@
 import { computed } from 'vue'
 import {
   Calendar,
-  ClipboardPaste,
+  Upload,
   BarChart3,
   FileText,
   FileSpreadsheet,

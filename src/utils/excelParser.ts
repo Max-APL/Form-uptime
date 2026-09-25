@@ -108,6 +108,64 @@ function getCellFormattedValue(cell: ExcelJS.Cell | undefined): string {
 }
 
 /**
+ * Elimina prefijos o sufijos como "(EJEMPLO)", "[EJEMPLO]", "EJEMPLO:" de un valor.
+ */
+export function stripExamplePrefix(val: string): string {
+  if (!val) return ''
+  return val
+    .replace(/^\s*[\(\[\{]?\s*ejemplo\s*[\)\]\}]?\s*:?\s*/i, '')
+    .replace(/\s*[\(\[\{]?\s*ejemplo\s*[\)\]\}]?\s*$/i, '')
+    .trim()
+}
+
+/**
+ * Escanea las primeras 10 filas de la hoja para encontrar la fila real de cabecera de incidentes.
+ */
+function findHeaderRowIndex(rows: ExcelJS.Row[]): number {
+  let bestIdx = 0
+  let bestScore = 0
+
+  for (let i = 0; i < Math.min(rows.length, 10); i++) {
+    const row = rows[i]
+    const maxCol = Math.max(row.cellCount, row.actualCellCount, 15)
+    const cellVals: string[] = []
+    for (let c = 1; c <= maxCol; c++) {
+      cellVals.push(getCellFormattedValue(row.getCell(c)))
+    }
+
+    const nonEmpties = cellVals.map(c => c.trim()).filter(Boolean)
+    const uniqueVals = new Set(nonEmpties.map(c => c.toLowerCase()))
+    if (uniqueVals.size < 2) continue
+
+    let score = 0
+    const cleanCells = cellVals.map(c => c.toLowerCase().replace(/[^a-z0-9]/g, ''))
+
+    const hasSistema = cleanCells.some(c => c.includes('sistema') || c.includes('system') || c.includes('servicio'))
+    const hasFecha = cleanCells.some(c => c.includes('fecha') || c.includes('date') || c.includes('dia'))
+    const hasInicio = cleanCells.some(c => c.includes('inicio') || c.includes('iniciocaida'))
+    const hasFin = cleanCells.some(c => c.includes('fin') || c.includes('fincaida'))
+    const hasTiempo = cleanCells.some(c => c.includes('tiempo') || c.includes('duracion') || c.includes('downtime'))
+    const hasIndicador = cleanCells.some(c => c.includes('indicador') || c.includes('indicator'))
+    const hasMotivo = cleanCells.some(c => c.includes('motivo') || c.includes('descripcion') || c.includes('causa'))
+
+    if (hasSistema) score++
+    if (hasFecha) score++
+    if (hasInicio) score++
+    if (hasFin) score++
+    if (hasTiempo) score++
+    if (hasIndicador) score++
+    if (hasMotivo) score++
+
+    if (score > bestScore && score >= 2) {
+      bestScore = score
+      bestIdx = i
+    }
+  }
+
+  return bestIdx
+}
+
+/**
  * Parses an Excel file buffer and returns standardized incident event records.
  */
 export async function parseExcelBuffer(buffer: ArrayBuffer | Uint8Array): Promise<ParsedExcelResult> {
@@ -137,8 +195,9 @@ export async function parseExcelBuffer(buffer: ArrayBuffer | Uint8Array): Promis
     }
   }
 
-  // Header row
-  const headerRow = rows[0]
+  // Identify real header row
+  const headerRowIdx = findHeaderRowIndex(rows)
+  const headerRow = rows[headerRowIdx]
   const headers: string[] = []
   const maxCol = Math.max(headerRow.cellCount, headerRow.actualCellCount, 20)
   for (let col = 1; col <= maxCol; col++) {
@@ -160,7 +219,7 @@ export async function parseExcelBuffer(buffer: ArrayBuffer | Uint8Array): Promis
   const periodCounts: Record<string, { month: number; year?: number; count: number }> = {}
   const warnings: string[] = []
 
-  for (let r = 1; r < rows.length; r++) {
+  for (let r = headerRowIdx + 1; r < rows.length; r++) {
     const row = rows[r]
     const rowIdx = r + 1
 
@@ -169,18 +228,27 @@ export async function parseExcelBuffer(buffer: ArrayBuffer | Uint8Array): Promis
       return getCellFormattedValue(row.getCell(idx + 1))
     }
 
-    const sistemaVal = getVal(idxSistema)
+    const rawSistema = getVal(idxSistema)
     const fechaVal = getVal(idxFecha)
     const inicioVal = getVal(idxInicio)
     const finVal = getVal(idxFin)
     const tiempoVal = getVal(idxTiempo)
-    const indicadorVal = getVal(idxIndicador)
-    const motivoVal = getVal(idxMotivo)
+    const rawIndicador = getVal(idxIndicador)
+    const rawMotivo = getVal(idxMotivo)
 
     // Skip totally empty rows
-    if (!sistemaVal && !fechaVal && !tiempoVal && !motivoVal) {
+    if (!rawSistema && !fechaVal && !tiempoVal && !rawMotivo) {
       continue
     }
+
+    // Skip header repeat
+    if (rawSistema.toLowerCase().includes('sistema') && (rawIndicador.toLowerCase().includes('indicador') || rawMotivo.toLowerCase().includes('motivo'))) {
+      continue
+    }
+
+    const sistemaVal = stripExamplePrefix(rawSistema) || rawSistema
+    const indicadorVal = stripExamplePrefix(rawIndicador) || rawIndicador
+    const motivoVal = rawMotivo
 
     if (!sistemaVal) {
       warnings.push(`Fila ${rowIdx}: Registro omitido por no tener nombre de SISTEMA.`)

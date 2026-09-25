@@ -345,7 +345,7 @@
                 <Network class="h-8 w-8 text-slate-300" />
                 <span class="font-medium text-xs">No hay enlaces de red registrados para este período.</span>
                 <span class="text-[11px] text-slate-400">
-                  Usa el botón <strong>«Agregar Enlace»</strong> o <strong>«Pegar Tabla»</strong> para cargar filas desde Excel.
+                  Usa el botón <strong>«Agregar Enlace»</strong> o <strong>«Importar»</strong> para cargar filas desde Excel.
                 </span>
               </div>
             </td>
