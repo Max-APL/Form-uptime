@@ -210,6 +210,138 @@ export async function generateNetworkTemplateWorkbook(): Promise<ExcelJS.Workboo
 }
 
 /**
+ * Genera el Workbook de Excel para la plantilla oficial de ACH Estadísticas (Resolución & MLD Banco Central).
+ * Contiene encabezados oficiales y fila descriptiva de ejemplo.
+ */
+export async function generateAchTemplateWorkbook(): Promise<ExcelJS.Workbook> {
+  const workbook = new ExcelJS.Workbook()
+  workbook.creator = 'BMSC Uptime System'
+  workbook.created = new Date()
+
+  const sheet = workbook.addWorksheet('Plantilla_ACH_Estadisticas', {
+    views: [{ showGridLines: true }]
+  })
+
+  // 1. Encabezados de Columna en Fila 1
+  const headers = [
+    'FECHA (*)',
+    'TIPO ACH (*)',
+    'CANTIDAD ACH (*)',
+    'MONTO ACH (BS.) (*)',
+    'TIPO MLD (BCB)',
+    'CANTIDAD MLD',
+    'MONTO MLD (BS.)',
+    'REVISION (0 o 1)'
+  ]
+
+  const headerRow = sheet.getRow(1)
+  headerRow.values = headers
+  headerRow.height = 28
+
+  const notes = [
+    'Fecha del registro o evento ACH en formato AAAA-MM-DD o DD/MM/AAAA (ej: 2026-08-31)',
+    'Tipo de transacción o resolución ACH (ej: TRANSFERENCIA ENTRANTE, SALIENTE, DEVOLUCION, REGULARIZADO)',
+    'Cantidad de transacciones ACH estándar (número entero, ej: 154)',
+    'Monto en Bolivianos de transacciones ACH estándar (ej: 845200.50)',
+    'Tipo exclusivo Banco Central de Bolivia MLD (ej: LIQUIDACION MLD, ABONO BCB, REGULARIZACION MLD)',
+    'Cantidad de transacciones MLD exclusivas del BCB (número entero, ej: 25)',
+    'Monto en Bolivianos MLD exclusivo del BCB (ej: 132000.00)',
+    'Estado de validación: 1 para Revisado, 0 para Pendiente de resolución'
+  ]
+
+  headerRow.eachCell((cell, colNum) => {
+    cell.font = { name: 'Arial', size: 9.5, bold: true, color: { argb: 'FFFFFFFF' } }
+    // ACH columns green, MLD columns navy blue, Revision gold
+    if (colNum >= 5 && colNum <= 7) {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF1E3A8A' } // Navy blue for BCB MLD
+      }
+    } else if (colNum === 8) {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD39F28' } // Gold for revision
+      }
+      cell.font = { name: 'Arial', size: 9.5, bold: true, color: { argb: 'FF000000' } }
+    } else {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF004D2C' } // Corporate Green for ACH
+      }
+    }
+    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FF003B22' } },
+      bottom: { style: 'medium', color: { argb: 'FFD39F28' } },
+      left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+      right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+    }
+    if (notes[colNum - 1]) {
+      cell.note = notes[colNum - 1]
+    }
+  })
+
+  // 2. Fila de ejemplo
+  const sampleRowValues = [
+    '2026-08-31',
+    '(EJEMPLO) TRANSFERENCIA ENTRANTE',
+    154,
+    845200.50,
+    '(EJEMPLO) LIQUIDACION MLD',
+    25,
+    132000.00,
+    1
+  ]
+
+  const sampleRow = sheet.getRow(2)
+  sampleRow.values = sampleRowValues
+  sampleRow.height = 22
+
+  sampleRow.eachCell((cell, colNum) => {
+    cell.font = { name: 'Arial', size: 9, italic: colNum === 2 || colNum === 5 }
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+      bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+      left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+      right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+    }
+    if (colNum === 2 || colNum === 5) {
+      cell.alignment = { horizontal: 'left', vertical: 'middle' }
+    } else if (colNum === 3 || colNum === 6) {
+      cell.alignment = { horizontal: 'right', vertical: 'middle' }
+      cell.numFmt = '#,##0'
+    } else if (colNum === 4 || colNum === 7) {
+      cell.alignment = { horizontal: 'right', vertical: 'middle' }
+      cell.numFmt = '#,##0.00'
+    } else {
+      cell.alignment = { horizontal: 'center', vertical: 'middle' }
+    }
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFF8FAFC' }
+    }
+  })
+
+  // Anchos de columna
+  sheet.columns = [
+    { key: 'fecha', width: 16 },
+    { key: 'tipo', width: 32 },
+    { key: 'cantidad', width: 18 },
+    { key: 'monto', width: 22 },
+    { key: 'tipoMld', width: 32 },
+    { key: 'cantidadMld', width: 18 },
+    { key: 'montoMld', width: 22 },
+    { key: 'revision', width: 18 }
+  ]
+
+  return workbook
+}
+
+/**
  * Descarga la plantilla oficial de Incidentes en el navegador.
  */
 export async function downloadIncidentTemplate(): Promise<void> {
@@ -232,3 +364,16 @@ export async function downloadNetworkTemplate(): Promise<void> {
   })
   saveAs(blob, 'BMSC_Plantilla_Importacion_Redes.xlsx')
 }
+
+/**
+ * Descarga la plantilla oficial de ACH Estadísticas en el navegador.
+ */
+export async function downloadAchTemplate(): Promise<void> {
+  const workbook = await generateAchTemplateWorkbook()
+  const buffer = await workbook.xlsx.writeBuffer()
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  })
+  saveAs(blob, 'BMSC_Plantilla_Importacion_ACH_Estadisticas.xlsx')
+}
+

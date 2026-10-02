@@ -36,12 +36,34 @@ export async function initOraclePool() {
 }
 
 /**
+ * Safely acquires a connection with a timeout (default 5000ms) to prevent hanging indefinitely.
+ */
+async function getSafeOracleConnection(timeoutMs = 5000) {
+  let timer
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error(`Timeout de conexión a Oracle superado (${timeoutMs}ms). Verifica conectividad con el servidor.`))
+    }, timeoutMs)
+  })
+
+  try {
+    const conn = await Promise.race([
+      oracledb.getConnection(dbConfig),
+      timeoutPromise
+    ])
+    return conn
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+/**
  * Tests connection to the Oracle database.
  */
 export async function testOracleConnection() {
   let connection
   try {
-    connection = await oracledb.getConnection(dbConfig)
+    connection = await getSafeOracleConnection()
     await connection.execute('SELECT 1 FROM DUAL')
     return {
       connected: true,
@@ -75,7 +97,7 @@ export async function testOracleConnection() {
 export async function getEventPeriodStatus(year, month) {
   let connection
   try {
-    connection = await oracledb.getConnection(dbConfig)
+    connection = await getSafeOracleConnection()
     const result = await connection.execute(
       `SELECT COUNT(*) AS TOTAL
          FROM ${TABLE_NAME}
@@ -133,7 +155,7 @@ function formatSecondsToHMS(totalSec) {
 export async function getEventsByPeriod(year, month) {
   let connection
   try {
-    connection = await oracledb.getConnection(dbConfig)
+    connection = await getSafeOracleConnection()
     const result = await connection.execute(
       `SELECT ID_EVENTO,
               SISTEMA,
@@ -270,7 +292,7 @@ export async function insertEventsToOracle(events) {
 
   let connection
   try {
-    connection = await oracledb.getConnection(dbConfig)
+    connection = await getSafeOracleConnection()
 
     const sql = `
       INSERT INTO ${TABLE_NAME} (
@@ -357,7 +379,7 @@ export async function syncPeriodEventsToOracle(year, month, events) {
 
   let connection
   try {
-    connection = await oracledb.getConnection(dbConfig)
+    connection = await getSafeOracleConnection()
 
     // 1. Delete previous records for the period within the transaction
     if (year && month) {
@@ -486,7 +508,7 @@ async function ensureNetworkTableSchema(connection) {
 export async function getNetworkEventsByPeriod(year, month) {
   let connection
   try {
-    connection = await oracledb.getConnection(dbConfig)
+    connection = await getSafeOracleConnection()
     await ensureNetworkTableSchema(connection)
 
     const sql = `
@@ -559,7 +581,7 @@ export async function getNetworkEventsByPeriod(year, month) {
 export async function syncNetworkEventsToOracle(year, month, records) {
   let connection
   try {
-    connection = await oracledb.getConnection(dbConfig)
+    connection = await getSafeOracleConnection()
     await ensureNetworkTableSchema(connection)
 
     // 1. Delete existing records for this month/year
@@ -640,4 +662,216 @@ export async function syncNetworkEventsToOracle(year, month, records) {
     }
   }
 }
+
+// ==========================================
+// 3. ACH Estadísticas Operations
+// ==========================================
+const ACH_TABLE_NAME = process.env.ORACLE_ACH_TABLE_NAME || 'ACH_ESTADISTICAS'
+
+async function ensureAchTableSchema(connection) {
+  try {
+    const checkSql = `SELECT COUNT(*) FROM USER_TABLES WHERE TABLE_NAME = '${ACH_TABLE_NAME}'`
+    const checkRes = await connection.execute(checkSql)
+    const exists = checkRes.rows[0][0] > 0
+
+    if (!exists) {
+      const createTableSql = `
+        CREATE TABLE ${ACH_TABLE_NAME} (
+            ID_REGISTRO     NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            CREADO_EN       TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+            FECHA           DATE DEFAULT SYSDATE NOT NULL,
+            TIPO            VARCHAR2(100) NOT NULL,
+            CANTIDAD        NUMBER(10) DEFAULT 0 NOT NULL,
+            MONTO           NUMBER(15,2) DEFAULT 0 NOT NULL,
+            TIPO_MLD        VARCHAR2(100),
+            CANTIDAD_MLD    NUMBER(10) DEFAULT 0 NOT NULL,
+            MONTO_MLD       NUMBER(15,2) DEFAULT 0 NOT NULL,
+            REVISION        NUMBER(1) DEFAULT 0 NOT NULL
+        )
+      `
+      await connection.execute(createTableSql)
+      console.log(`✅ Tabla ${ACH_TABLE_NAME} creada automáticamente en Oracle.`)
+
+      try {
+        await connection.execute(`CREATE INDEX IDX_${ACH_TABLE_NAME}_FECHA ON ${ACH_TABLE_NAME} (FECHA)`)
+      } catch (idxErr) {
+        // ignore if index exists
+      }
+    }
+  } catch (err) {
+    console.warn(`⚠️ Nota schema ${ACH_TABLE_NAME}:`, err.message)
+  }
+}
+
+/**
+ * Consulta los registros de ACH_ESTADISTICAS para un período determinado (año y mes)
+ */
+export async function getAchStatisticsByPeriod(year, month) {
+  let connection
+  try {
+    connection = await getSafeOracleConnection()
+    await ensureAchTableSchema(connection)
+
+    const sql = `
+      SELECT
+        ID_REGISTRO,
+        CREADO_EN,
+        FECHA,
+        TIPO,
+        CANTIDAD,
+        MONTO,
+        TIPO_MLD,
+        CANTIDAD_MLD,
+        MONTO_MLD,
+        REVISION
+      FROM ${ACH_TABLE_NAME}
+      WHERE EXTRACT(YEAR FROM FECHA) = :year
+        AND EXTRACT(MONTH FROM FECHA) = :month
+      ORDER BY FECHA ASC, ID_REGISTRO ASC
+    `
+
+    const result = await connection.execute(sql, { year, month })
+
+    const records = (result.rows || []).map(row => {
+      let fechaStr = ''
+      if (row[2]) {
+        const d = new Date(row[2])
+        fechaStr = !isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : String(row[2])
+      }
+
+      let creadoEnStr = new Date().toISOString()
+      if (row[1]) {
+        const c = new Date(row[1])
+        creadoEnStr = !isNaN(c.getTime()) ? c.toISOString() : String(row[1])
+      }
+
+      return {
+        id: `ach_${row[0]}`,
+        dbId: row[0],
+        creadoEn: creadoEnStr,
+        fecha: fechaStr,
+        tipo: row[3] || '',
+        cantidad: Number(row[4]) || 0,
+        monto: Number(row[5]) || 0,
+        tipoMld: row[6] || '',
+        cantidadMld: Number(row[7]) || 0,
+        montoMld: Number(row[8]) || 0,
+        revision: row[9] === 1
+      }
+    })
+
+    return {
+      year,
+      month,
+      count: records.length,
+      records
+    }
+  } catch (err) {
+    console.error('Error al consultar ACH_ESTADISTICAS en Oracle:', err)
+    throw err
+  } finally {
+    if (connection) {
+      try {
+        await connection.close()
+      } catch (closeErr) {
+        console.error('Error cerrando conexión:', closeErr)
+      }
+    }
+  }
+}
+
+/**
+ * Sincroniza / guarda los registros de ACH_ESTADISTICAS para un período
+ */
+export async function syncAchStatisticsToOracle(year, month, records) {
+  let connection
+  try {
+    connection = await getSafeOracleConnection()
+    await ensureAchTableSchema(connection)
+
+    // 1. Delete existing records for this month/year
+    const deleteSql = `
+      DELETE FROM ${ACH_TABLE_NAME}
+      WHERE EXTRACT(YEAR FROM FECHA) = :year
+        AND EXTRACT(MONTH FROM FECHA) = :month
+    `
+    await connection.execute(deleteSql, { year, month }, { autoCommit: false })
+
+    // 2. Insert new records
+    if (Array.isArray(records) && records.length > 0) {
+      const insertSql = `
+        INSERT INTO ${ACH_TABLE_NAME} (
+          FECHA,
+          TIPO,
+          CANTIDAD,
+          MONTO,
+          TIPO_MLD,
+          CANTIDAD_MLD,
+          MONTO_MLD,
+          REVISION
+        ) VALUES (
+          :fecha,
+          :tipo,
+          :cantidad,
+          :monto,
+          :tipo_mld,
+          :cantidad_mld,
+          :monto_mld,
+          :revision
+        )
+      `
+
+      const defaultDate = new Date(year, month - 1, 15, 12, 0, 0)
+
+      const binds = records.map(r => {
+        let f = defaultDate
+        if (r.fecha) {
+          const parts = r.fecha.split('-').map(Number)
+          if (parts.length === 3) {
+            f = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0)
+          }
+        }
+
+        return {
+          fecha: f,
+          tipo: String(r.tipo || '').trim().toUpperCase(),
+          cantidad: Math.max(0, parseInt(r.cantidad, 10) || 0),
+          monto: Number(r.monto) || 0,
+          tipo_mld: String(r.tipoMld || '').trim().toUpperCase(),
+          cantidad_mld: Math.max(0, parseInt(r.cantidadMld, 10) || 0),
+          monto_mld: Number(r.montoMld) || 0,
+          revision: r.revision ? 1 : 0
+        }
+      })
+
+      await connection.executeMany(insertSql, binds, { autoCommit: false })
+    }
+
+    // 3. Commit
+    await connection.commit()
+
+    return {
+      success: true,
+      insertedCount: records.length
+    }
+  } catch (err) {
+    if (connection) {
+      try {
+        await connection.rollback()
+      } catch (rbErr) {
+        console.error('Error en rollback de ACH_ESTADISTICAS:', rbErr)
+      }
+    }
+    throw err
+  } finally {
+    if (connection) {
+      try {
+        await connection.close()
+      } catch (closeErr) {
+        console.error('Error cerrando conexión:', closeErr)
+      }
+    }
+  }
+}
+
 

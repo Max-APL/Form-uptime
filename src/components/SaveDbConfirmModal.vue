@@ -314,8 +314,14 @@ watch(
   async (newVal) => {
     if (newVal) {
       isLoadingDb.value = true
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 3500)
+
       try {
-        const res = await fetch(`/api/events?year=${props.year}&month=${props.month}`)
+        const res = await fetch(`/api/events?year=${props.year}&month=${props.month}`, {
+          signal: controller.signal
+        })
+        clearTimeout(timeoutId)
         if (res.ok) {
           const data = await res.json()
           existingDbEvents.value = Array.isArray(data.events) ? data.events : []
@@ -326,6 +332,7 @@ watch(
         console.warn('No se pudieron consultar eventos previos de Oracle:', err)
         existingDbEvents.value = []
       } finally {
+        clearTimeout(timeoutId)
         isLoadingDb.value = false
       }
     }

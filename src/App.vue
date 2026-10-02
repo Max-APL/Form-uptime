@@ -7,19 +7,24 @@
       v-model:month="month"
       v-model:active-tab="activeTab"
       :draft-status-text="currentDraftStatusText"
-      :is-saving-oracle="isSavingOracle || isSavingNetworkOracle"
+      :is-saving-oracle="isSavingOracle || isSavingNetworkOracle || isSavingAchOracle"
       :total-records="events.length"
       :total-network-records="networkRecords.length"
+      :total-ach-records="achRecords.length"
       @add-row="addNewRowInline"
       @add-network-row="addNewNetworkRow"
+      @add-ach-row="addNewAchRow"
       @open-paste-modal="showPasteModal = true"
       @open-network-paste-modal="showNetworkPasteModal = true"
+      @open-ach-paste-modal="showAchPasteModal = true"
       @open-report-modal="showReportModal = true"
       @open-official-report="showOfficialReportModal = true"
       @export-excel="handleExportExcel"
       @export-network-excel="handleExportNetworkExcel"
+      @export-ach-excel="handleExportAchExcel"
       @save-oracle="handleSaveToOracle"
       @save-network-oracle="handleSaveNetworkToOracle"
+      @save-ach-oracle="handleSaveAchToOracle"
     />
 
     <!-- Toast notification overlay -->
@@ -60,11 +65,20 @@
       </template>
 
       <!-- 2. Formulario de Enlaces de Red (Telecom, Agencias & ATMs) -->
-      <template v-else>
+      <template v-else-if="activeTab === 'redes'">
         <NetworkTable
           :records="networkRecords"
           :reference-date="defaultPeriodDate"
           @update:records="handleUpdateNetworkRecords"
+        />
+      </template>
+
+      <!-- 3. Formulario de ACH Estadísticas (Resolución & MLD Banco Central) -->
+      <template v-else-if="activeTab === 'ach'">
+        <AchTable
+          :records="achRecords"
+          :reference-date="defaultPeriodDate"
+          @update:records="handleUpdateAchRecords"
         />
       </template>
 
@@ -94,6 +108,14 @@
       :default-reference-date="defaultPeriodDate"
       @close="showNetworkPasteModal = false"
       @import-records="handleImportNetworkRecords"
+    />
+
+    <!-- Paste from Clipboard Modal for ACH Estadísticas -->
+    <AchPasteModal
+      :is-open="showAchPasteModal"
+      :default-reference-date="defaultPeriodDate"
+      @close="showAchPasteModal = false"
+      @import-records="handleImportAchRecords"
     />
 
     <!-- Row Detail Editor / Creator Modal -->
@@ -147,6 +169,18 @@
       @confirm="executeSaveNetworkToOracle"
     />
 
+    <!-- Save to DB Confirmation Modal for ACH Estadísticas -->
+    <SaveAchDbConfirmModal
+      :is-open="showSaveAchConfirmModal"
+      :year="year"
+      :month="month"
+      :month-name="report.monthName"
+      :current-records="achRecords"
+      :is-saving="isSavingAchOracle"
+      @close="showSaveAchConfirmModal = false"
+      @confirm="executeSaveAchToOracle"
+    />
+
     <!-- Footer -->
     <footer class="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500">
       Banco Mercantil Santa Cruz &copy; {{ year }} — Formulario de Disponibilidad y Caídas V2
@@ -167,21 +201,29 @@ import { DEFAULT_ENLACES } from './types/networkUptime'
 import { loadNetworkDraft, saveNetworkDraft } from './utils/networkStorage'
 import { exportNetworkEventsToExcel } from './utils/networkExcelExporter'
 
+import type { AchStatisticRecord } from './types/achStatistics'
+import { DEFAULT_ACH_TIPOS } from './types/achStatistics'
+import { loadAchDraft, saveAchDraft } from './utils/achStorage'
+import { exportAchStatisticsToExcel } from './utils/achExcelExporter'
+
 import Header from './components/Header.vue'
 import MetricsSummary from './components/MetricsSummary.vue'
 import UptimeTable from './components/UptimeTable.vue'
 import NetworkTable from './components/NetworkTable.vue'
+import AchTable from './components/AchTable.vue'
 import BulkActionsBar from './components/BulkActionsBar.vue'
 import PasteImportModal from './components/PasteImportModal.vue'
 import NetworkPasteModal from './components/NetworkPasteModal.vue'
+import AchPasteModal from './components/AchPasteModal.vue'
 import RowEditorModal from './components/RowEditorModal.vue'
 import ConsolidatedReportModal from './components/ConsolidatedReportModal.vue'
 import OfficialReportModal from './components/OfficialReportModal.vue'
 import SaveDbConfirmModal from './components/SaveDbConfirmModal.vue'
 import SaveNetworkDbConfirmModal from './components/SaveNetworkDbConfirmModal.vue'
+import SaveAchDbConfirmModal from './components/SaveAchDbConfirmModal.vue'
 
-// Active tab ('sistemas' | 'redes')
-const activeTab = ref<'sistemas' | 'redes'>('sistemas')
+// Active tab ('sistemas' | 'redes' | 'ach')
+const activeTab = ref<'sistemas' | 'redes' | 'ach'>('sistemas')
 
 const now = new Date()
 const year = ref(now.getFullYear())
@@ -212,6 +254,16 @@ const networkDraftStatusText = ref('Borrador listo')
 const isSavingNetworkOracle = ref(false)
 const showNetworkPasteModal = ref(false)
 const showSaveNetworkConfirmModal = ref(false)
+
+// ==========================================
+// 3. ACH Estadísticas State (Resolución & MLD)
+// ==========================================
+const achRecords = ref<AchStatisticRecord[]>([])
+const achDraftTimestamp = ref(0)
+const achDraftStatusText = ref('Borrador listo')
+const isSavingAchOracle = ref(false)
+const showAchPasteModal = ref(false)
+const showSaveAchConfirmModal = ref(false)
 
 // Toast system
 const toast = ref<{ show: boolean; message: string; type: 'success' | 'error' | 'info' }>({
@@ -249,7 +301,13 @@ const selectedCount = computed(() => {
 
 // Current draft status text based on active tab
 const currentDraftStatusText = computed(() => {
-  return activeTab.value === 'sistemas' ? draftStatusText.value : networkDraftStatusText.value
+  if (activeTab.value === 'sistemas') {
+    return draftStatusText.value
+  } else if (activeTab.value === 'redes') {
+    return networkDraftStatusText.value
+  } else {
+    return achDraftStatusText.value
+  }
 })
 
 // Default date for selected period
@@ -321,9 +379,39 @@ async function loadNetworkPeriodData() {
   }
 }
 
+// Load or change period draft for ACH Estadísticas
+async function loadAchPeriodData() {
+  const draft = loadAchDraft(year.value, month.value)
+  if (draft && draft.records && draft.records.length > 0) {
+    achRecords.value = draft.records
+    achDraftTimestamp.value = draft.timestamp
+    achDraftStatusText.value = formatTimeAgo(draft.timestamp)
+  } else {
+    try {
+      const res = await fetch(`/api/ach-statistics?year=${year.value}&month=${month.value}`)
+      if (res.ok) {
+        const data = await res.json()
+        if (Array.isArray(data.records) && data.records.length > 0) {
+          achRecords.value = data.records
+          achDraftTimestamp.value = Date.now()
+          achDraftStatusText.value = 'Cargado de la BD'
+          saveAchDraft(year.value, month.value, data.records)
+          return
+        }
+      }
+    } catch {
+      // offline or oracle unavailable
+    }
+    achRecords.value = []
+    achDraftTimestamp.value = Date.now()
+    achDraftStatusText.value = 'Sin registros ACH para este período'
+  }
+}
+
 watch([year, month], () => {
   loadPeriodData()
   loadNetworkPeriodData()
+  loadAchPeriodData()
 }, { immediate: true })
 
 // Auto-save draft on any change to events
@@ -340,12 +428,22 @@ watch(networkRecords, () => {
   networkDraftStatusText.value = formatTimeAgo(networkDraftTimestamp.value)
 }, { deep: true })
 
+// Auto-save draft on any change to achRecords
+watch(achRecords, () => {
+  saveAchDraft(year.value, month.value, achRecords.value)
+  achDraftTimestamp.value = Date.now()
+  achDraftStatusText.value = formatTimeAgo(achDraftTimestamp.value)
+}, { deep: true })
+
 setInterval(() => {
   if (draftTimestamp.value > 0) {
     draftStatusText.value = formatTimeAgo(draftTimestamp.value)
   }
   if (networkDraftTimestamp.value > 0) {
     networkDraftStatusText.value = formatTimeAgo(networkDraftTimestamp.value)
+  }
+  if (achDraftTimestamp.value > 0) {
+    achDraftStatusText.value = formatTimeAgo(achDraftTimestamp.value)
   }
 }, 30000)
 
@@ -625,6 +723,101 @@ async function executeSaveNetworkToOracle() {
   }
 }
 
+// ==========================================
+// Handlers for ACH Estadísticas
+// ==========================================
+function handleUpdateAchRecords(updated: AchStatisticRecord[]) {
+  achRecords.value = updated
+}
+
+function addNewAchRow() {
+  const newRow: AchStatisticRecord = {
+    id: `ach-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    creadoEn: new Date().toISOString(),
+    fecha: defaultPeriodDate.value,
+    tipo: DEFAULT_ACH_TIPOS[0],
+    cantidad: 1,
+    monto: 0,
+    tipoMld: '',
+    cantidadMld: 0,
+    montoMld: 0,
+    revision: 0,
+    selected: false
+  }
+
+  achRecords.value.unshift(newRow)
+  showToast('Nueva fila de registro ACH agregada a la tabla.', 'info')
+}
+
+function handleImportAchRecords(payload: { records: AchStatisticRecord[]; mode: 'append' | 'replace' }) {
+  if (payload.mode === 'replace') {
+    achRecords.value = payload.records
+    showToast(`Se reemplazaron los datos con ${payload.records.length} registros ACH importados.`, 'success')
+  } else {
+    achRecords.value = [...payload.records, ...achRecords.value]
+    showToast(`Se agregaron ${payload.records.length} registros ACH a la tabla.`, 'success')
+  }
+}
+
+async function handleExportAchExcel() {
+  if (achRecords.value.length === 0) {
+    showToast('No hay estadísticas ACH para exportar.', 'info')
+    return
+  }
+  try {
+    await exportAchStatisticsToExcel(achRecords.value, year.value, report.value.monthName)
+    showToast('Archivo Excel de ACH descargado exitosamente.', 'success')
+  } catch (err: any) {
+    showToast(`Error al exportar Excel de ACH: ${err.message || err}`, 'error')
+  }
+}
+
+function handleSaveAchToOracle() {
+  if (achRecords.value.length === 0) {
+    showToast('No hay registros ACH en la tabla para guardar.', 'info')
+    return
+  }
+  showSaveAchConfirmModal.value = true
+}
+
+async function executeSaveAchToOracle() {
+  isSavingAchOracle.value = true
+  try {
+    const res = await fetch('/api/ach-statistics/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        year: year.value,
+        month: month.value,
+        records: achRecords.value
+      })
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      throw new Error(data.message || 'No se pudo conectar al servidor de Oracle.')
+    }
+    showSaveAchConfirmModal.value = false
+    showToast(data.message || 'Registros ACH guardados en Oracle exitosamente.', 'success')
+
+    try {
+      const reloadRes = await fetch(`/api/ach-statistics?year=${year.value}&month=${month.value}`)
+      if (reloadRes.ok) {
+        const reloadData = await reloadRes.json()
+        if (Array.isArray(reloadData.records) && reloadData.records.length > 0) {
+          achRecords.value = reloadData.records
+          saveAchDraft(year.value, month.value, reloadData.records)
+        }
+      }
+    } catch {
+      // ignore
+    }
+  } catch (err: any) {
+    showToast(`Error al guardar en ACH_ESTADISTICAS: ${err.message}. El borrador local permanece seguro.`, 'error')
+  } finally {
+    isSavingAchOracle.value = false
+  }
+}
+
 // Initial seed if first visit
 onMounted(() => {
   // Seed demo incidentes if empty
@@ -733,6 +926,52 @@ onMounted(() => {
           nombre: 'ATM EQUIPETROL 24 HORAS',
           uptimeMensual: 99.9500,
           uptimeAnual: 99.9800
+        }
+      ]
+    }
+  }
+
+  // Seed demo ACH statistics if empty
+  if (achRecords.value.length === 0) {
+    const achDraft = loadAchDraft(year.value, month.value)
+    if (!achDraft || achDraft.records.length === 0) {
+      const padM = String(month.value).padStart(2, '0')
+      achRecords.value = [
+        {
+          id: 'ach-demo-1',
+          creadoEn: new Date().toISOString(),
+          fecha: `${year.value}-${padM}-02`,
+          tipo: 'TRANSFERENCIA ENTRANTE',
+          cantidad: 245,
+          monto: 1420500.00,
+          tipoMld: 'LIQUIDACION MLD',
+          cantidadMld: 30,
+          montoMld: 180000.00,
+          revision: 1
+        },
+        {
+          id: 'ach-demo-2',
+          creadoEn: new Date().toISOString(),
+          fecha: `${year.value}-${padM}-15`,
+          tipo: 'DEVOLUCION DE FONDOS (CAIDA ACH)',
+          cantidad: 12,
+          monto: 65400.50,
+          tipoMld: 'REGULARIZACION MLD BCB',
+          cantidadMld: 5,
+          montoMld: 28500.00,
+          revision: 0
+        },
+        {
+          id: 'ach-demo-3',
+          creadoEn: new Date().toISOString(),
+          fecha: `${year.value}-${padM}-20`,
+          tipo: 'TRANSFERENCIA SALIENTE',
+          cantidad: 180,
+          monto: 980200.75,
+          tipoMld: '',
+          cantidadMld: 0,
+          montoMld: 0,
+          revision: 1
         }
       ]
     }

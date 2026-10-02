@@ -12,7 +12,9 @@ import {
   insertEventsToOracle,
   syncPeriodEventsToOracle,
   getNetworkEventsByPeriod,
-  syncNetworkEventsToOracle
+  syncNetworkEventsToOracle,
+  getAchStatisticsByPeriod,
+  syncAchStatisticsToOracle
 } from './db.js'
 
 dotenv.config()
@@ -173,6 +175,60 @@ app.post('/api/network-events/sync', async (req, res) => {
     res.status(500).json({
       success: false,
       message: `Error al guardar en Oracle DB (EVENTOS_REDES): ${err.message || err}`,
+      error: String(err)
+    })
+  }
+})
+
+// ==========================================
+// ACH Estadísticas (ACH_ESTADISTICAS) Endpoints
+// ==========================================
+
+// Get ACH statistics for a given period
+app.get('/api/ach-statistics', async (req, res) => {
+  const year = Number(req.query.year)
+  const month = Number(req.query.month)
+
+  if (!Number.isInteger(year) || year < 2000 || year > 2100 || !Number.isInteger(month) || month < 1 || month > 12) {
+    return res.status(400).json({ message: 'El mes o año no es válido.' })
+  }
+
+  try {
+    const data = await getAchStatisticsByPeriod(year, month)
+    res.json(data)
+  } catch (err) {
+    console.error('Error consultando ACH_ESTADISTICAS en Oracle:', err)
+    res.status(500).json({
+      message: 'No se pudieron consultar los registros de ACH_ESTADISTICAS en Oracle.',
+      error: String(err)
+    })
+  }
+})
+
+// Sync/Save ACH statistics for a given period
+app.post('/api/ach-statistics/sync', async (req, res) => {
+  try {
+    const { records, year, month } = req.body
+
+    if (!year || !month) {
+      return res.status(400).json({
+        success: false,
+        message: 'Se requiere año y mes para sincronizar el período.'
+      })
+    }
+
+    const result = await syncAchStatisticsToOracle(Number(year), Number(month), records || [])
+
+    res.json({
+      success: true,
+      message: `Se guardaron exitosamente ${result.insertedCount} registros en la tabla ACH_ESTADISTICAS.`,
+      insertedCount: result.insertedCount
+    })
+  } catch (err) {
+    console.error('Error guardando registros en ACH_ESTADISTICAS en Oracle:', err)
+    res.status(500).json({
+      success: false,
+      message: `Error al guardar en Oracle DB (ACH_ESTADISTICAS): ${err.message || err}`,
       error: String(err)
     })
   }

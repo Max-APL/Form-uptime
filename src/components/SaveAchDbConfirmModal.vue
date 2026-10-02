@@ -8,17 +8,17 @@
       class="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl transition-all"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="modal-title-network"
+      aria-labelledby="modal-title-ach"
     >
       <!-- Header -->
       <div class="flex items-start justify-between border-b border-slate-100 pb-4">
         <div class="flex items-center gap-3">
           <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#004D2C]/10 text-[#004D2C] border border-[#004D2C]/20">
-            <Network class="h-5 w-5" />
+            <ArrowLeftRight class="h-5 w-5" />
           </div>
           <div>
-            <h3 id="modal-title-network" class="text-base font-bold text-slate-900">
-              Confirmar Guardado de Enlaces de Red
+            <h3 id="modal-title-ach" class="text-base font-bold text-slate-900">
+              Confirmar Guardado de ACH Estadísticas
             </h3>
             <p class="text-xs text-slate-500">
               Período oficial: <strong class="text-slate-700">{{ periodLabel }}</strong>
@@ -38,7 +38,7 @@
       <!-- Loading comparison state -->
       <div v-if="isLoadingDb" class="py-12 flex flex-col items-center justify-center gap-2 text-slate-500 text-xs">
         <Loader2 class="h-6 w-6 animate-spin text-[#004D2C]" />
-        <span>Comparando con los registros actuales de EVENTOS_REDES en Oracle...</span>
+        <span>Comparando con los registros actuales de ACH_ESTADISTICAS en Oracle...</span>
       </div>
 
       <!-- Content body -->
@@ -89,13 +89,13 @@
           <!-- Total a Guardar -->
           <div class="rounded-xl border border-[#004D2C]/20 bg-[#004D2C]/5 p-3 text-center">
             <div class="text-[11px] font-semibold text-[#004D2C] uppercase tracking-wider">
-              Total Enlaces
+              Total Filas
             </div>
             <div class="mt-1 text-2xl font-black text-[#003B22] font-mono">
               {{ currentRecords.length }}
             </div>
             <div class="text-[10px] text-[#004D2C]/80">
-              Filas finales
+              En lote
             </div>
           </div>
 
@@ -108,7 +108,7 @@
         >
           <AlertCircle class="h-4 w-4 shrink-0 text-rose-600" />
           <span>
-            Se detectaron <strong>{{ diffStats.deletedCount }} enlace(s)</strong> que estaban en la BD y no están en la tabla actual (se desestimarán).
+            Se detectaron <strong>{{ diffStats.deletedCount }} registro(s)</strong> que estaban en la BD y no están en la tabla actual (se desestimarán).
           </span>
         </div>
 
@@ -118,32 +118,47 @@
           <div class="flex items-center justify-between">
             <span class="text-slate-500">Tabla destino:</span>
             <span class="font-mono font-semibold text-slate-800 bg-white border border-slate-200 px-2 py-0.5 rounded text-[11px]">
-              EVENTOS_REDES (Oracle)
+              ACH_ESTADISTICAS (Oracle)
             </span>
           </div>
 
-          <!-- Breakdown by Enlace Type -->
-          <div class="flex items-center justify-between">
-            <span class="text-slate-500">Desglose por tipo de enlace:</span>
-            <div class="flex items-center gap-1.5 font-medium text-slate-700 text-[11px]">
-              <span class="rounded bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.2">
-                WAN: <strong>{{ diffStats.wanCount }}</strong>
-              </span>
-              <span class="rounded bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.2">
-                Agencias: <strong>{{ diffStats.agenciasCount }}</strong>
-              </span>
-              <span class="rounded bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.2">
-                ATMs: <strong>{{ diffStats.atmsCount }}</strong>
-              </span>
+          <!-- Breakdown ACH vs MLD totals -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+            <div class="rounded-lg bg-emerald-50/80 border border-emerald-200 p-2.5 space-y-1">
+              <div class="text-[10px] font-bold uppercase text-emerald-800 tracking-wider">
+                Transacciones ACH
+              </div>
+              <div class="flex justify-between text-[11px]">
+                <span class="text-slate-600">Cantidad Total:</span>
+                <strong class="font-mono text-emerald-900">{{ formatQuantity(diffStats.totalCantidadAch) }}</strong>
+              </div>
+              <div class="flex justify-between text-[11px]">
+                <span class="text-slate-600">Monto Total:</span>
+                <strong class="font-mono text-emerald-900">{{ formatCurrencyBs(diffStats.totalMontoAch) }}</strong>
+              </div>
+            </div>
+
+            <div class="rounded-lg bg-blue-50/80 border border-blue-200 p-2.5 space-y-1">
+              <div class="text-[10px] font-bold uppercase text-blue-800 tracking-wider">
+                Banco Central (MLD)
+              </div>
+              <div class="flex justify-between text-[11px]">
+                <span class="text-slate-600">Cantidad MLD:</span>
+                <strong class="font-mono text-blue-900">{{ formatQuantity(diffStats.totalCantidadMld) }}</strong>
+              </div>
+              <div class="flex justify-between text-[11px]">
+                <span class="text-slate-600">Monto MLD:</span>
+                <strong class="font-mono text-blue-900">{{ formatCurrencyBs(diffStats.totalMontoMld) }}</strong>
+              </div>
             </div>
           </div>
 
-          <!-- Average Uptimes -->
-          <div class="flex items-center justify-between">
-            <span class="text-slate-500">Disponibilidad Promedio:</span>
-            <span class="font-medium text-slate-800 font-mono text-[11px]">
-              Mes: <strong class="text-emerald-700">{{ diffStats.avgMensual }}%</strong> | 
-              Anual: <strong class="text-slate-700">{{ diffStats.avgAnual }}%</strong>
+          <!-- Revision status -->
+          <div class="flex items-center justify-between pt-1">
+            <span class="text-slate-500">Estado de Revisión:</span>
+            <span class="font-medium text-slate-800 text-[11px]">
+              <strong class="text-blue-700">{{ diffStats.reviewedCount }}</strong> con SÍ / 
+              <strong class="text-slate-600">{{ diffStats.pendingCount }}</strong> con NO
             </span>
           </div>
 
@@ -153,7 +168,7 @@
         <div class="flex items-start gap-2.5 rounded-lg border border-[#004D2C]/20 bg-[#004D2C]/5 p-3 text-xs text-slate-700">
           <CheckCircle2 class="h-4 w-4 shrink-0 text-[#004D2C] mt-0.5" />
           <p>
-            Al confirmar, se sincronizará el lote completo para <strong>{{ periodLabel }}</strong> en la tabla <strong>EVENTOS_REDES</strong>. Los datos quedarán formalmente registrados para el informe mensual.
+            Al confirmar, se sincronizará el lote para <strong>{{ periodLabel }}</strong> en la tabla <strong>ACH_ESTADISTICAS</strong>. Los datos quedarán formalmente registrados en Oracle.
           </p>
         </div>
 
@@ -186,15 +201,16 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { Database, AlertCircle, CheckCircle2, Loader2, Network } from 'lucide-vue-next'
-import type { NetworkEventRecord } from '../types/networkUptime'
+import { Database, AlertCircle, CheckCircle2, Loader2, ArrowLeftRight } from 'lucide-vue-next'
+import type { AchStatisticRecord } from '../types/achStatistics'
+import { formatCurrencyBs, formatQuantity } from '../types/achStatistics'
 
 const props = defineProps<{
   isOpen: boolean
   year: number
   month: number
   monthName: string
-  currentRecords: NetworkEventRecord[]
+  currentRecords: AchStatisticRecord[]
   isSaving: boolean
 }>()
 
@@ -204,7 +220,7 @@ defineEmits<{
 }>()
 
 const isLoadingDb = ref(false)
-const existingDbRecords = ref<NetworkEventRecord[]>([])
+const existingDbRecords = ref<AchStatisticRecord[]>([])
 
 const periodLabel = computed(() => `${props.monthName} de ${props.year}`)
 
@@ -214,7 +230,7 @@ async function loadExistingFromDb() {
   const timeoutId = setTimeout(() => controller.abort(), 3500)
 
   try {
-    const res = await fetch(`/api/network-events?year=${props.year}&month=${props.month}`, {
+    const res = await fetch(`/api/ach-statistics?year=${props.year}&month=${props.month}`, {
       signal: controller.signal
     })
     clearTimeout(timeoutId)
@@ -225,7 +241,7 @@ async function loadExistingFromDb() {
       existingDbRecords.value = []
     }
   } catch (err) {
-    console.warn('No se pudieron consultar enlaces de Oracle:', err)
+    console.warn('No se pudieron consultar registros ACH de Oracle:', err)
     existingDbRecords.value = []
   } finally {
     clearTimeout(timeoutId)
@@ -253,27 +269,27 @@ const diffStats = computed(() => {
   for (const row of current) {
     let matchIdx = -1
 
-    // 1. Match by dbId or persistent id
-    if (row.dbId) {
-      matchIdx = db.findIndex((dbItem, idx) => unmatchedDbIndices.has(idx) && String(dbItem.dbId) === String(row.dbId))
+    // 1. Match by idRegistro or id
+    if (row.idRegistro) {
+      matchIdx = db.findIndex((dbItem, idx) => unmatchedDbIndices.has(idx) && String(dbItem.idRegistro) === String(row.idRegistro))
     }
-    if (matchIdx === -1 && row.id && row.id.startsWith('net_')) {
+    if (matchIdx === -1 && row.id && row.id.startsWith('ach_')) {
       matchIdx = db.findIndex((dbItem, idx) => unmatchedDbIndices.has(idx) && String(dbItem.id) === String(row.id))
     }
 
-    // 2. Fallback heuristic: match by enlace, departamento, and nombre
+    // 2. Fallback heuristic: match by fecha, tipo, and tipoMld
     if (matchIdx === -1) {
-      const cleanEnlace = String(row.enlace || '').trim().toUpperCase()
-      const cleanDepto = String(row.departamento || '').trim().toUpperCase()
-      const cleanNombre = String(row.nombre || '').trim().toUpperCase()
+      const cleanFecha = String(row.fecha || '').trim()
+      const cleanTipo = String(row.tipo || '').trim().toUpperCase()
+      const cleanTipoMld = String(row.tipoMld || '').trim().toUpperCase()
 
       for (const idx of unmatchedDbIndices) {
         const dbItem = db[idx]
-        const dbEnlace = String(dbItem.enlace || '').trim().toUpperCase()
-        const dbDepto = String(dbItem.departamento || '').trim().toUpperCase()
-        const dbNombre = String(dbItem.nombre || '').trim().toUpperCase()
+        const dbFecha = String(dbItem.fecha || '').trim()
+        const dbTipo = String(dbItem.tipo || '').trim().toUpperCase()
+        const dbTipoMld = String(dbItem.tipoMld || '').trim().toUpperCase()
 
-        if (dbEnlace === cleanEnlace && dbDepto === cleanDepto && dbNombre === cleanNombre) {
+        if (dbFecha === cleanFecha && dbTipo === cleanTipo && dbTipoMld === cleanTipoMld) {
           matchIdx = idx
           break
         }
@@ -285,11 +301,13 @@ const diffStats = computed(() => {
       const matched = db[matchIdx]
 
       const isModified =
-        Number(row.uptimeMensual) !== Number(matched.uptimeMensual) ||
-        Number(row.uptimeAnual) !== Number(matched.uptimeAnual) ||
-        String(row.nombre || '').trim() !== String(matched.nombre || '').trim() ||
-        String(row.departamento || '').trim().toUpperCase() !== String(matched.departamento || '').trim().toUpperCase() ||
-        String(row.enlace || '').trim().toUpperCase() !== String(matched.enlace || '').trim().toUpperCase()
+        Number(row.cantidad) !== Number(matched.cantidad) ||
+        Number(row.monto) !== Number(matched.monto) ||
+        Number(row.cantidadMld) !== Number(matched.cantidadMld) ||
+        Number(row.montoMld) !== Number(matched.montoMld) ||
+        Number(row.revision) !== Number(matched.revision) ||
+        String(row.tipo || '').trim().toUpperCase() !== String(matched.tipo || '').trim().toUpperCase() ||
+        String(row.tipoMld || '').trim().toUpperCase() !== String(matched.tipoMld || '').trim().toUpperCase()
 
       if (isModified) {
         modifiedCount++
@@ -303,27 +321,25 @@ const diffStats = computed(() => {
 
   const deletedCount = unmatchedDbIndices.size
 
-  // Breakdown by the 3 official enlace types
-  const wanCount = current.filter(r => r.enlace?.toUpperCase().includes('WAN')).length
-  const agenciasCount = current.filter(r => r.enlace?.toUpperCase().includes('AGENCIA')).length
-  const atmsCount = current.filter(r => r.enlace?.toUpperCase().includes('ATM')).length
-
-  // Overall averages
-  const sumMensual = current.reduce((acc, r) => acc + (Number(r.uptimeMensual) || 0), 0)
-  const sumAnual = current.reduce((acc, r) => acc + (Number(r.uptimeAnual) || 0), 0)
-  const avgMensualNum = current.length > 0 ? sumMensual / current.length : 100
-  const avgAnualNum = current.length > 0 ? sumAnual / current.length : 100
+  // Totals
+  const totalCantidadAch = current.reduce((sum, r) => sum + (Number(r.cantidad) || 0), 0)
+  const totalMontoAch = current.reduce((sum, r) => sum + (Number(r.monto) || 0), 0)
+  const totalCantidadMld = current.reduce((sum, r) => sum + (Number(r.cantidadMld) || 0), 0)
+  const totalMontoMld = current.reduce((sum, r) => sum + (Number(r.montoMld) || 0), 0)
+  const reviewedCount = current.filter(r => Number(r.revision) === 1).length
+  const pendingCount = current.length - reviewedCount
 
   return {
     newCount,
     modifiedCount,
     unchangedCount,
     deletedCount,
-    wanCount,
-    agenciasCount,
-    atmsCount,
-    avgMensual: avgMensualNum.toFixed(4),
-    avgAnual: avgAnualNum.toFixed(4)
+    totalCantidadAch,
+    totalMontoAch,
+    totalCantidadMld,
+    totalMontoMld,
+    reviewedCount,
+    pendingCount
   }
 })
 </script>
