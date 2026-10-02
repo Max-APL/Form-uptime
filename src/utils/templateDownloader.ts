@@ -222,16 +222,16 @@ export async function generateAchTemplateWorkbook(): Promise<ExcelJS.Workbook> {
     views: [{ showGridLines: true }]
   })
 
-  // 1. Encabezados de Columna en Fila 1
+  // 1. Encabezados de Columna en Fila 1 (Idénticos al formato oficial del banco)
   const headers = [
-    'FECHA (*)',
-    'TIPO ACH (*)',
-    'CANTIDAD ACH (*)',
-    'MONTO ACH (BS.) (*)',
-    'TIPO MLD (BCB)',
-    'CANTIDAD MLD',
-    'MONTO MLD (BS.)',
-    'REVISION (0 o 1)'
+    'FECHA',
+    'TIPO',
+    'CANTIDAD',
+    'MONTO',
+    'TIPO MLD',
+    'CANT MLD',
+    'MONTO MLD',
+    'REVISION'
   ]
 
   const headerRow = sheet.getRow(1)
@@ -239,14 +239,14 @@ export async function generateAchTemplateWorkbook(): Promise<ExcelJS.Workbook> {
   headerRow.height = 28
 
   const notes = [
-    'Fecha del registro o evento ACH en formato AAAA-MM-DD o DD/MM/AAAA (ej: 2026-08-31)',
-    'Tipo de transacción o resolución ACH (ej: TRANSFERENCIA ENTRANTE, SALIENTE, DEVOLUCION, REGULARIZADO)',
-    'Cantidad de transacciones ACH estándar (número entero, ej: 154)',
-    'Monto en Bolivianos de transacciones ACH estándar (ej: 845200.50)',
-    'Tipo exclusivo Banco Central de Bolivia MLD (ej: LIQUIDACION MLD, ABONO BCB, REGULARIZACION MLD)',
-    'Cantidad de transacciones MLD exclusivas del BCB (número entero, ej: 25)',
-    'Monto en Bolivianos MLD exclusivo del BCB (ej: 132000.00)',
-    'Estado de validación: 1 para Revisado, 0 para Pendiente de resolución'
+    'Fecha del registro (ej: 9/1/2026 o 2026-09-01)',
+    'Tipo de transacción: Abonos o Debitos',
+    'Cantidad de transacciones ACH (ej: 391)',
+    'Monto en Bolivianos ACH (ej: 692106.54)',
+    'Tipo Banco Central MLD: Abonos o Debitos',
+    'Cantidad MLD Banco Central (ej: 1)',
+    'Monto MLD Banco Central en Bolivianos (ej: 100.00)',
+    'Estado de revisión (1 = Sí, 0 = No)'
   ]
 
   headerRow.eachCell((cell, colNum) => {
@@ -284,15 +284,15 @@ export async function generateAchTemplateWorkbook(): Promise<ExcelJS.Workbook> {
     }
   })
 
-  // 2. Fila de ejemplo
+  // 2. Fila de ejemplo con datos reales Abonos/Debitos
   const sampleRowValues = [
-    '2026-08-31',
-    '(EJEMPLO) TRANSFERENCIA ENTRANTE',
-    154,
-    845200.50,
-    '(EJEMPLO) LIQUIDACION MLD',
-    25,
-    132000.00,
+    '2026-09-02',
+    '(EJEMPLO) Abonos',
+    391,
+    692106.54,
+    '(EJEMPLO) Abonos',
+    1,
+    100.00,
     1
   ]
 

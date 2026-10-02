@@ -1,5 +1,10 @@
 import type { AchStatisticRecord } from '../types/achStatistics'
-import { parseAchAmount, parseAchQuantity } from '../types/achStatistics'
+import {
+  parseAchAmount,
+  parseAchQuantity,
+  normalizeAchTipo,
+  normalizeAchDate
+} from '../types/achStatistics'
 
 function cleanCell(val: string | undefined): string {
   if (!val) return ''
@@ -65,21 +70,21 @@ export function parsePastedAchText(
     if (row.length === 0 || (row.length === 1 && !row[0])) continue
 
     let fecha = todayStr
-    let tipo = 'TRANSFERENCIA ENTRANTE'
+    let tipo = 'Abonos'
     let cantidad = 0
     let monto = 0
     let tipoMld = ''
     let cantidadMld = 0
     let montoMld = 0
-    let revision = 0
+    let revision = 1
 
     if (hasHeader) {
-      if (colIdx.fecha >= 0 && row[colIdx.fecha]) fecha = row[colIdx.fecha].trim()
-      if (colIdx.tipo >= 0 && row[colIdx.tipo]) tipo = row[colIdx.tipo].trim().toUpperCase()
+      if (colIdx.fecha >= 0 && row[colIdx.fecha]) fecha = normalizeAchDate(row[colIdx.fecha], todayStr)
+      if (colIdx.tipo >= 0 && row[colIdx.tipo]) tipo = normalizeAchTipo(row[colIdx.tipo]) || 'Abonos'
       if (colIdx.cantidad >= 0 && row[colIdx.cantidad]) cantidad = parseAchQuantity(row[colIdx.cantidad])
       if (colIdx.monto >= 0 && row[colIdx.monto]) monto = parseAchAmount(row[colIdx.monto])
       
-      if (colIdx.tipoMld >= 0 && row[colIdx.tipoMld]) tipoMld = row[colIdx.tipoMld].trim().toUpperCase()
+      if (colIdx.tipoMld >= 0 && row[colIdx.tipoMld]) tipoMld = normalizeAchTipo(row[colIdx.tipoMld])
       if (colIdx.cantidadMld >= 0 && row[colIdx.cantidadMld]) cantidadMld = parseAchQuantity(row[colIdx.cantidadMld])
       if (colIdx.montoMld >= 0 && row[colIdx.montoMld]) montoMld = parseAchAmount(row[colIdx.montoMld])
       
@@ -99,11 +104,11 @@ export function parsePastedAchText(
       if (eff.length >= 7) {
         // [fecha, tipo, cantidad, monto, tipoMld, cantidadMld, montoMld, (revision)]
         if (eff[0] && (eff[0].includes('-') || eff[0].includes('/'))) {
-          fecha = eff[0].trim()
-          tipo = eff[1]?.trim().toUpperCase() || 'TRANSFERENCIA ENTRANTE'
+          fecha = normalizeAchDate(eff[0], todayStr)
+          tipo = normalizeAchTipo(eff[1]) || 'Abonos'
           cantidad = parseAchQuantity(eff[2])
           monto = parseAchAmount(eff[3])
-          tipoMld = eff[4]?.trim().toUpperCase() || ''
+          tipoMld = normalizeAchTipo(eff[4])
           cantidadMld = parseAchQuantity(eff[5])
           montoMld = parseAchAmount(eff[6])
           if (eff[7]) {
@@ -112,10 +117,10 @@ export function parsePastedAchText(
           }
         } else {
           // [tipo, cantidad, monto, tipoMld, cantidadMld, montoMld, revision]
-          tipo = eff[0]?.trim().toUpperCase() || 'TRANSFERENCIA ENTRANTE'
+          tipo = normalizeAchTipo(eff[0]) || 'Abonos'
           cantidad = parseAchQuantity(eff[1])
           monto = parseAchAmount(eff[2])
-          tipoMld = eff[3]?.trim().toUpperCase() || ''
+          tipoMld = normalizeAchTipo(eff[3])
           cantidadMld = parseAchQuantity(eff[4])
           montoMld = parseAchAmount(eff[5])
           const valRev = (eff[6] || '').trim().toLowerCase()
@@ -123,15 +128,15 @@ export function parsePastedAchText(
         }
       } else if (eff.length >= 6) {
         // [tipo, cantidad, monto, tipoMld, cantidadMld, montoMld]
-        tipo = eff[0]?.trim().toUpperCase() || 'TRANSFERENCIA ENTRANTE'
+        tipo = normalizeAchTipo(eff[0]) || 'Abonos'
         cantidad = parseAchQuantity(eff[1])
         monto = parseAchAmount(eff[2])
-        tipoMld = eff[3]?.trim().toUpperCase() || ''
+        tipoMld = normalizeAchTipo(eff[3])
         cantidadMld = parseAchQuantity(eff[4])
         montoMld = parseAchAmount(eff[5])
       } else if (eff.length >= 3) {
         // [tipo, cantidad, monto]
-        tipo = eff[0]?.trim().toUpperCase() || 'TRANSFERENCIA ENTRANTE'
+        tipo = normalizeAchTipo(eff[0]) || 'Abonos'
         cantidad = parseAchQuantity(eff[1])
         monto = parseAchAmount(eff[2])
       }

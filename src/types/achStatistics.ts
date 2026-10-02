@@ -15,30 +15,79 @@ export interface AchStatisticRecord {
 }
 
 export const DEFAULT_ACH_TIPOS: string[] = [
-  'TRANSFERENCIA ENTRANTE',
-  'TRANSFERENCIA SALIENTE',
-  'DEVOLUCION DE FONDOS (CAIDA ACH)',
-  'ENTRANTE',
-  'SALIENTE',
-  'DEVUELTO',
-  'REGULARIZADO',
-  'PENDIENTE',
-  'RECHAZO'
+  'Abonos',
+  'Debitos'
 ]
 
 export const DEFAULT_MLD_TIPOS: string[] = [
-  'LIQUIDACION MLD',
-  'REGULARIZACION MLD BCB',
-  'ABONO BCB MLD',
-  'MLD ENTRANTES',
-  'MLD SALIENTES',
-  'MLD LIQUIDACION',
-  'MLD RECHAZOS',
-  'MLD REGULARIZACION'
+  'Abonos',
+  'Debitos'
 ]
 
 /**
- * Parsea un monto decimal o número que puede venir con 'Bs.', comas, puntos, etc.
+ * Normaliza los valores de tipo ACH o MLD a los canónicos: 'Abonos' o 'Debitos'
+ */
+export function normalizeAchTipo(val: string | undefined): string {
+  if (!val) return ''
+  const clean = val.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  if (clean.includes('abono')) return 'Abonos'
+  if (clean.includes('debito')) return 'Debitos'
+  return val.trim()
+}
+
+/**
+ * Normaliza fechas provenientes de Excel o portapapeles (ej. 9/1/2026, 01/09/2026, 2026-09-01) a YYYY-MM-DD
+ */
+export function normalizeAchDate(val: string | undefined, referenceDate?: string): string {
+  if (!val) return referenceDate || new Date().toISOString().slice(0, 10)
+  const trimmed = val.trim()
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed
+
+  const separator = trimmed.includes('/') ? '/' : trimmed.includes('-') ? '-' : null
+  if (separator) {
+    const parts = trimmed.split(separator).map(p => p.trim())
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        // AAAA-MM-DD
+        return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`
+      }
+
+      const p1 = parseInt(parts[0], 10)
+      const p2 = parseInt(parts[1], 10)
+      const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2]
+
+      let refMonth: number | null = null
+      if (referenceDate) {
+        const refParts = referenceDate.split('-')
+        if (refParts.length === 3) refMonth = parseInt(refParts[1], 10)
+      }
+
+      let month = p2
+      let day = p1
+
+      // Si el primer número coincide con el mes del período de referencia (ej: 9/1/2026 con mes 9)
+      if (refMonth && p1 === refMonth && p2 !== refMonth && p2 <= 31) {
+        month = p1
+        day = p2
+      } else if (p1 > 12 && p2 <= 12) {
+        // Definitivamente D/M/AAAA
+        day = p1
+        month = p2
+      } else if (p2 > 12 && p1 <= 12) {
+        // Definitivamente M/D/AAAA
+        month = p1
+        day = p2
+      }
+
+      return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    }
+  }
+
+  return trimmed
+}
+
+/**
+ * Parsea un monto decimal o número que puede venir con 'Bs.', comas, puntos, '-' (cero), etc.
  */
 export function parseAchAmount(val: string | number | undefined): number {
   if (val === undefined || val === null || val === '') return 0
@@ -47,6 +96,9 @@ export function parseAchAmount(val: string | number | undefined): number {
   // Limpiar caracteres no numéricos excepto coma, punto y signo menos
   let clean = val.toString().trim()
   clean = clean.replace(/bs\.?/gi, '').replace(/\$/g, '').trim()
+
+  // Soporte para formato contable de Excel donde '-' representa 0.00
+  if (clean === '-' || clean === '–' || clean === '—' || clean === '- ' || clean === ' -') return 0
 
   // Si tiene formato español '1.250,50' -> convertir a '1250.50'
   if (clean.includes(',') && clean.includes('.')) {

@@ -202,7 +202,6 @@ import { loadNetworkDraft, saveNetworkDraft } from './utils/networkStorage'
 import { exportNetworkEventsToExcel } from './utils/networkExcelExporter'
 
 import type { AchStatisticRecord } from './types/achStatistics'
-import { DEFAULT_ACH_TIPOS } from './types/achStatistics'
 import { loadAchDraft, saveAchDraft } from './utils/achStorage'
 import { exportAchStatisticsToExcel } from './utils/achExcelExporter'
 
@@ -735,13 +734,13 @@ function addNewAchRow() {
     id: `ach-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
     creadoEn: new Date().toISOString(),
     fecha: defaultPeriodDate.value,
-    tipo: DEFAULT_ACH_TIPOS[0],
+    tipo: 'Abonos',
     cantidad: 1,
     monto: 0,
-    tipoMld: '',
+    tipoMld: 'Abonos',
     cantidadMld: 0,
     montoMld: 0,
-    revision: 0,
+    revision: 1,
     selected: false
   }
 
@@ -931,44 +930,80 @@ onMounted(() => {
     }
   }
 
-  // Seed demo ACH statistics if empty
+  // Seed real-world ACH statistics if empty
   if (achRecords.value.length === 0) {
     const achDraft = loadAchDraft(year.value, month.value)
     if (!achDraft || achDraft.records.length === 0) {
       const padM = String(month.value).padStart(2, '0')
       achRecords.value = [
         {
-          id: 'ach-demo-1',
+          id: 'ach-seed-1',
           creadoEn: new Date().toISOString(),
-          fecha: `${year.value}-${padM}-02`,
-          tipo: 'TRANSFERENCIA ENTRANTE',
-          cantidad: 245,
-          monto: 1420500.00,
-          tipoMld: 'LIQUIDACION MLD',
-          cantidadMld: 30,
-          montoMld: 180000.00,
+          fecha: `${year.value}-${padM}-01`,
+          tipo: 'Abonos',
+          cantidad: 4,
+          monto: 40367.60,
+          tipoMld: 'Abonos',
+          cantidadMld: 0,
+          montoMld: 0,
           revision: 1
         },
         {
-          id: 'ach-demo-2',
+          id: 'ach-seed-2',
           creadoEn: new Date().toISOString(),
-          fecha: `${year.value}-${padM}-15`,
-          tipo: 'DEVOLUCION DE FONDOS (CAIDA ACH)',
-          cantidad: 12,
-          monto: 65400.50,
-          tipoMld: 'REGULARIZACION MLD BCB',
-          cantidadMld: 5,
-          montoMld: 28500.00,
-          revision: 0
+          fecha: `${year.value}-${padM}-01`,
+          tipo: 'Debitos',
+          cantidad: 0,
+          monto: 0,
+          tipoMld: 'Debitos',
+          cantidadMld: 0,
+          montoMld: 0,
+          revision: 1
         },
         {
-          id: 'ach-demo-3',
+          id: 'ach-seed-3',
           creadoEn: new Date().toISOString(),
-          fecha: `${year.value}-${padM}-20`,
-          tipo: 'TRANSFERENCIA SALIENTE',
-          cantidad: 180,
-          monto: 980200.75,
-          tipoMld: '',
+          fecha: `${year.value}-${padM}-02`,
+          tipo: 'Abonos',
+          cantidad: 391,
+          monto: 692106.54,
+          tipoMld: 'Abonos',
+          cantidadMld: 1,
+          montoMld: 100.00,
+          revision: 1
+        },
+        {
+          id: 'ach-seed-4',
+          creadoEn: new Date().toISOString(),
+          fecha: `${year.value}-${padM}-02`,
+          tipo: 'Debitos',
+          cantidad: 1,
+          monto: 110.00,
+          tipoMld: 'Debitos',
+          cantidadMld: 2,
+          montoMld: 10500.00,
+          revision: 1
+        },
+        {
+          id: 'ach-seed-5',
+          creadoEn: new Date().toISOString(),
+          fecha: `${year.value}-${padM}-03`,
+          tipo: 'Abonos',
+          cantidad: 59,
+          monto: 22476.53,
+          tipoMld: 'Abonos',
+          cantidadMld: 0,
+          montoMld: 0,
+          revision: 1
+        },
+        {
+          id: 'ach-seed-6',
+          creadoEn: new Date().toISOString(),
+          fecha: `${year.value}-${padM}-03`,
+          tipo: 'Debitos',
+          cantidad: 0,
+          monto: 0,
+          tipoMld: 'Debitos',
           cantidadMld: 0,
           montoMld: 0,
           revision: 1

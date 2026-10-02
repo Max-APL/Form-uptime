@@ -132,6 +132,28 @@
 
     </div>
 
+    <!-- Visual Validation Alert Bar (Business rule enforcement: Tipo ACH === Tipo MLD) -->
+    <div
+      v-if="mismatchedCount > 0"
+      class="flex items-center justify-between gap-3 px-3.5 py-2 bg-amber-50/95 border-b border-amber-200 text-amber-900 text-xs"
+    >
+      <div class="flex items-center gap-2">
+        <AlertTriangle class="h-4 w-4 text-amber-600 shrink-0" />
+        <span>
+          <strong>Validación de Regla de Negocio:</strong> Hay <strong>{{ mismatchedCount }}</strong> registro(s) con tipos no coincidentes entre ACH y Banco Central MLD. Ambos deben ser iguales.
+        </span>
+      </div>
+      <button
+        type="button"
+        @click="syncAllMismatches"
+        class="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold px-3 py-1 text-xs shadow-2xs transition cursor-pointer shrink-0"
+        title="Sincronizar automáticamente todos los tipos para que sean idénticos"
+      >
+        <Check class="h-3.5 w-3.5" />
+        <span>Sincronizar Todos</span>
+      </button>
+    </div>
+
     <!-- Main Table Container -->
     <div class="relative overflow-x-auto max-h-[68vh]">
       <table class="w-full text-left text-xs border-collapse">
@@ -276,8 +298,13 @@
                   <select
                     :value="row.tipo"
                     @change="handleTipoSelect(row, $event)"
-                    class="w-full rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-xs font-semibold text-slate-800 focus:border-[#004D2C] focus:outline-none cursor-pointer truncate shadow-2xs transition"
-                    title="Seleccionar tipo de transacción o resolución ACH"
+                    :class="[
+                      'w-full rounded-md border bg-white px-1.5 py-0.5 text-xs font-semibold focus:outline-none cursor-pointer truncate shadow-2xs transition',
+                      row.tipo !== row.tipoMld
+                        ? 'border-amber-400 text-amber-900 bg-amber-50/40'
+                        : 'border-slate-200 text-slate-800 focus:border-[#004D2C]'
+                    ]"
+                    title="Seleccionar tipo de transacción o resolución ACH (sincronizado con MLD)"
                   >
                     <option
                       v-for="t in availableTipos"
@@ -292,12 +319,24 @@
                     </option>
                   </select>
 
+                  <!-- Direct button to equalize if different -->
+                  <button
+                    v-if="row.tipo !== row.tipoMld"
+                    type="button"
+                    @click="syncRowTipo(row, 'ach')"
+                    class="inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200 transition shrink-0 cursor-pointer shadow-2xs"
+                    title="Regla de negocio: El tipo debe coincidir en ACH y MLD. Clic para sincronizar a Tipo ACH."
+                  >
+                    <AlertTriangle class="h-2.5 w-2.5 text-amber-600" />
+                    <span class="hidden sm:inline">Difiere</span>
+                  </button>
+
                   <!-- Direct Pencil Button on Hover to write custom type -->
                   <button
                     type="button"
                     @click="startCustomTipo(row)"
                     class="opacity-0 group-hover/tipo:opacity-100 p-0.5 rounded text-slate-400 hover:text-[#004D2C] hover:bg-slate-100 transition cursor-pointer shrink-0"
-                    title="Escribir tipo ACH personalizado"
+                    title="Escribir tipo personalizado (aplica a ACH y MLD)"
                   >
                     <Edit3 class="h-3 w-3" />
                   </button>
@@ -363,12 +402,16 @@
                 <!-- Select Mode for Tipo MLD -->
                 <div v-else class="flex items-center gap-0.5 w-full">
                   <select
-                    :value="row.tipoMld || ''"
+                    :value="row.tipoMld || row.tipo"
                     @change="handleMldSelect(row, $event)"
-                    class="w-full rounded-md border border-blue-200 bg-white px-1.5 py-0.5 text-xs font-semibold text-blue-900 focus:border-blue-600 focus:outline-none cursor-pointer truncate shadow-2xs transition"
-                    title="Seleccionar tipo Banco Central MLD"
+                    :class="[
+                      'w-full rounded-md border bg-white px-1.5 py-0.5 text-xs font-semibold focus:outline-none cursor-pointer truncate shadow-2xs transition',
+                      row.tipo !== row.tipoMld
+                        ? 'border-amber-400 text-amber-900 bg-amber-50/40'
+                        : 'border-blue-200 text-blue-900 focus:border-blue-600'
+                    ]"
+                    title="Seleccionar tipo Banco Central MLD (sincronizado con Tipo ACH)"
                   >
-                    <option value="">(Sin MLD / No aplica)</option>
                     <option
                       v-for="m in availableMldTipos"
                       :key="m"
@@ -378,16 +421,28 @@
                     </option>
                     <option disabled>──────────</option>
                     <option value="__CUSTOM_NEW__" class="text-blue-700 font-semibold">
-                      ✏️ + Personalizar nuevo MLD...
+                      ✏️ + Personalizar nuevo tipo...
                     </option>
                   </select>
+
+                  <!-- Direct button to equalize if different -->
+                  <button
+                    v-if="row.tipo !== row.tipoMld"
+                    type="button"
+                    @click="syncRowTipo(row, 'mld')"
+                    class="inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200 transition shrink-0 cursor-pointer shadow-2xs"
+                    title="Regla de negocio: El tipo debe coincidir en ACH y MLD. Clic para sincronizar a Tipo MLD."
+                  >
+                    <AlertTriangle class="h-2.5 w-2.5 text-amber-600" />
+                    <span class="hidden sm:inline">Difiere</span>
+                  </button>
 
                   <!-- Direct Pencil Button on Hover to write custom MLD type -->
                   <button
                     type="button"
                     @click="startCustomMld(row)"
                     class="opacity-0 group-hover/mld:opacity-100 p-0.5 rounded text-slate-400 hover:text-blue-700 hover:bg-slate-100 transition cursor-pointer shrink-0"
-                    title="Escribir tipo MLD personalizado"
+                    title="Escribir tipo personalizado (aplica a MLD y ACH)"
                   >
                     <Edit3 class="h-3 w-3" />
                   </button>
@@ -524,7 +579,7 @@ import { ref, computed } from 'vue'
 import type { AchStatisticRecord } from '../types/achStatistics'
 import {
   DEFAULT_ACH_TIPOS,
-  DEFAULT_MLD_TIPOS,
+  normalizeAchTipo,
   parseAchAmount,
   formatCurrencyBs,
   formatQuantity
@@ -536,7 +591,8 @@ import {
   BarChart3,
   ArrowLeftRight,
   Check,
-  Edit3
+  Edit3,
+  AlertTriangle
 } from 'lucide-vue-next'
 
 const props = defineProps<{
@@ -558,36 +614,46 @@ const editingCustomTipoRowId = ref<string | null>(null)
 const customTipoInput = ref('')
 const editingCustomMldRowId = ref<string | null>(null)
 const customMldInput = ref('')
+const customTiposList = ref<string[]>([])
 
-const availableTipos = computed(() => {
-  const set = new Set<string>()
-  DEFAULT_ACH_TIPOS.forEach(t => {
-    const clean = t.replace(/\s+/g, ' ').trim().toUpperCase()
-    if (clean) set.add(clean)
+// Regla de negocio: Ambos campos (ACH y MLD) comparten siempre el mismo universo de tipos
+const sharedTipos = computed(() => {
+  const set = new Set<string>(DEFAULT_ACH_TIPOS)
+  customTiposList.value.forEach(t => {
+    if (t && t.trim()) set.add(t.trim())
   })
   props.records.forEach(r => {
-    if (r.tipo) {
-      const clean = r.tipo.replace(/\s+/g, ' ').trim().toUpperCase()
-      if (clean) set.add(clean)
-    }
+    if (r.tipo && r.tipo.trim()) set.add(r.tipo.trim())
+    if (r.tipoMld && r.tipoMld.trim()) set.add(r.tipoMld.trim())
   })
   return Array.from(set)
 })
 
-const availableMldTipos = computed(() => {
-  const set = new Set<string>()
-  DEFAULT_MLD_TIPOS.forEach(m => {
-    const clean = m.replace(/\s+/g, ' ').trim().toUpperCase()
-    if (clean) set.add(clean)
-  })
+const availableTipos = computed(() => sharedTipos.value)
+const availableMldTipos = computed(() => sharedTipos.value)
+
+// Validación visual en UI: Contador de registros con discrepancia
+const mismatchedCount = computed(() => {
+  return (props.records || []).filter(r => r.tipo !== r.tipoMld).length
+})
+
+function syncRowTipo(row: AchStatisticRecord, preference: 'ach' | 'mld' = 'ach') {
+  const target = preference === 'mld'
+    ? (row.tipoMld || row.tipo || 'Abonos')
+    : (row.tipo || row.tipoMld || 'Abonos')
+  row.tipo = target
+  row.tipoMld = target
+}
+
+function syncAllMismatches() {
   props.records.forEach(r => {
-    if (r.tipoMld) {
-      const clean = r.tipoMld.replace(/\s+/g, ' ').trim().toUpperCase()
-      if (clean) set.add(clean)
+    if (r.tipo !== r.tipoMld) {
+      const target = r.tipo || r.tipoMld || 'Abonos'
+      r.tipo = target
+      r.tipoMld = target
     }
   })
-  return Array.from(set)
-})
+}
 
 const hasActiveFilters = computed(() => {
   return searchQuery.value.trim() !== '' || filterTipo.value !== 'ALL' || filterRevision.value !== 'ALL'
@@ -649,13 +715,13 @@ function addNewRow() {
     id: `ach-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
     creadoEn: new Date().toISOString(),
     fecha: props.referenceDate,
-    tipo: DEFAULT_ACH_TIPOS[0],
+    tipo: 'Abonos',
     cantidad: 1,
     monto: 0,
-    tipoMld: '',
+    tipoMld: 'Abonos',
     cantidadMld: 0,
     montoMld: 0,
-    revision: 0,
+    revision: 1,
     selected: false
   }
 
@@ -685,25 +751,31 @@ function toggleRowRevision(row: AchStatisticRecord) {
   row.revision = Number(row.revision) === 1 ? 0 : 1
 }
 
-// Handlers for Tipo ACH
+// Handlers for Tipo ACH & Tipo MLD (Sincronización bidireccional por regla de negocio)
 function handleTipoSelect(row: AchStatisticRecord, e: Event) {
   const val = (e.target as HTMLSelectElement).value
   if (val === '__CUSTOM_NEW__') {
     startCustomTipo(row)
   } else {
     row.tipo = val
+    row.tipoMld = val // Regla de negocio: sincronizar en ambos
   }
 }
 
 function startCustomTipo(row: AchStatisticRecord) {
   editingCustomTipoRowId.value = row.id
-  customTipoInput.value = row.tipo || ''
+  customTipoInput.value = row.tipo || row.tipoMld || ''
 }
 
 function confirmCustomTipo(row: AchStatisticRecord) {
-  const clean = customTipoInput.value.replace(/\s+/g, ' ').trim().toUpperCase()
-  if (clean) {
+  const raw = customTipoInput.value.replace(/\s+/g, ' ').trim()
+  if (raw) {
+    const clean = normalizeAchTipo(raw) || raw
     row.tipo = clean
+    row.tipoMld = clean // Regla de negocio: se coloca en ambos
+    if (!customTiposList.value.includes(clean)) {
+      customTiposList.value.push(clean)
+    }
   }
   editingCustomTipoRowId.value = null
   customTipoInput.value = ''
@@ -721,17 +793,25 @@ function handleMldSelect(row: AchStatisticRecord, e: Event) {
     startCustomMld(row)
   } else {
     row.tipoMld = val
+    row.tipo = val // Regla de negocio: sincronizar en ambos
   }
 }
 
 function startCustomMld(row: AchStatisticRecord) {
   editingCustomMldRowId.value = row.id
-  customMldInput.value = row.tipoMld || ''
+  customMldInput.value = row.tipoMld || row.tipo || ''
 }
 
 function confirmCustomMld(row: AchStatisticRecord) {
-  const clean = customMldInput.value.replace(/\s+/g, ' ').trim().toUpperCase()
-  row.tipoMld = clean
+  const raw = customMldInput.value.replace(/\s+/g, ' ').trim()
+  if (raw) {
+    const clean = normalizeAchTipo(raw) || raw
+    row.tipoMld = clean
+    row.tipo = clean // Regla de negocio: se coloca en ambos
+    if (!customTiposList.value.includes(clean)) {
+      customTiposList.value.push(clean)
+    }
+  }
   editingCustomMldRowId.value = null
   customMldInput.value = ''
 }

@@ -2,7 +2,8 @@ import ExcelJS from 'exceljs'
 import type { AchStatisticRecord } from '../types/achStatistics'
 import {
   parseAchAmount,
-  DEFAULT_ACH_TIPOS
+  normalizeAchTipo,
+  normalizeAchDate
 } from '../types/achStatistics'
 
 export interface ParsedAchExcelResult {
@@ -202,18 +203,7 @@ export async function parseAchExcelBuffer(
     }
 
     // Format Fecha
-    let fecha = todayIso
-    if (rawFecha) {
-      if (/^\d{4}-\d{2}-\d{2}$/.test(rawFecha)) {
-        fecha = rawFecha
-      } else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(rawFecha)) {
-        const parts = rawFecha.split('/')
-        fecha = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`
-      } else if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(rawFecha)) {
-        const parts = rawFecha.split('-')
-        fecha = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`
-      }
-    }
+    const fecha = normalizeAchDate(rawFecha, todayIso)
 
     // Amounts and counts
     const cantidad = Math.max(0, Math.round(parseAchAmount(rawCantAch)))
@@ -222,19 +212,22 @@ export async function parseAchExcelBuffer(
     const montoMld = parseAchAmount(rawMontoMld)
 
     // Revision (1 or 0)
-    let revision = 0
+    let revision = 1
     const cleanRev = rawRevision.toLowerCase().trim()
-    if (cleanRev === '1' || cleanRev === 'si' || cleanRev === 'true' || cleanRev === 'revisado' || cleanRev === 'ok') {
-      revision = 1
+    if (cleanRev === '0' || cleanRev === 'no' || cleanRev === 'false' || cleanRev === 'pendiente') {
+      revision = 0
     }
+
+    const finalTipo = normalizeAchTipo(rawTipoAch) || normalizeAchTipo(rawTipoMld) || 'Abonos'
+    const finalTipoMld = normalizeAchTipo(rawTipoMld) || finalTipo
 
     records.push({
       id: `ach-xl-${Date.now()}-${rowIdx}-${Math.random().toString(36).substring(2, 6)}`,
       fecha,
-      tipo: rawTipoAch || DEFAULT_ACH_TIPOS[0],
+      tipo: finalTipo,
       cantidad,
       monto,
-      tipoMld: rawTipoMld || '',
+      tipoMld: finalTipoMld,
       cantidadMld,
       montoMld,
       revision,
